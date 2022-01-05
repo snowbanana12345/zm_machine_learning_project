@@ -1,0 +1,39 @@
+
+archive/back_test.py
+*.csv
+archive/coin_toss.py
+archive/hp_filter.py
+archive/decision_tree_classification.py
+*.pyc
+*.xml
+*.iml
+archive/limit_order_strategies.py
+archive/machine_learning_Code/base_model.py
+archive/machine_learning_Code/db_barrier_classi_train.py
+archive/machine_learning_Code/db_barrier_classi_cross_val.py
+archive/machine_learning_Code/double_barrier_models.py
+archive/machine_learning_Code/feature_selectors.py
+archive/machine_learning_Code/hyper_parameter_tuning.py
+archive/machine_learning_Code/label_analysis.py
+archive/machine_learning_Code/mean_decrease_accuracy.py
+archive/machine_learning_Code/model_performance.py
+archive/machine_learning_Code/mean_decrease_impurity.py
+archive/machine_learning_Code/model_selector.py
+*.png
+archive/tick_sampled/tick_market_making.py
+archive/tick_sampled/tick_market_making_sim.py
+archive/tick_sampled/tick_market_making_sweep.py
+archive/tick_sampled/tick_market_making_sweep_sim.py
+archive/volume_sampled/ml_double_barrier_mo.py
+archive/volume_sampled/vol_market_making.py
+archive/volume_sampled/vol_market_making_sim.py
+archive/volume_sampled/vol_market_making_sweep.py
+archive/volume_sampled/vol_market_making_sweep_sim.py
+*.log
+plots/bar_data_plots/NHK17/dollar_sampled/Dollar sampled bar -- NHK17 -- 2017-01-25 -- afternoon --  sampling dollars 
+plots/bar_data_plots/NHK17/dollar_sampled/Dollar sampled bar -- NHK17 -- 2017-01-25 -- afternoon --  sampling dollars 
+plots/bar_data_plots/NHK17/dollar_sampled/Dollar sampled bar -- NHK17 -- 2017-01-25 -- morning --  sampling dollars 
+test/scratch/scratch_file.py
+archive/post_trade.py
+archive/seasonal.py
+archive/test_script.py
