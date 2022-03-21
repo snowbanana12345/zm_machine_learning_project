@@ -68,36 +68,36 @@ label_result_vwap : label_gen_mod.LabelDataFrame = label_gen_vwap.create_labels_
 
 # ------ compare results with answer -------
 open_compare_df = pd.DataFrame({
-    "result_label" : label_result_open.get_label_df_ref().loc[:, label_result_open.label_col_name],
-    "result_look_ahead" : label_result_open.get_label_df_ref().loc[:, label_result_open.look_ahead_col_name],
+    "result_label" : label_result_open.get_label_series_ref(),
+    "result_look_ahead" : label_result_open.get_look_ahead_series_ref(),
     "answer_label" : answer_open_label_series,
     "answer_look_ahead" : answer_open_look_ahead_series
 })
 
 close_compare_df = pd.DataFrame({
-    "result_label": label_result_close.get_label_df_ref().loc[:, label_result_close.label_col_name],
-    "result_look_ahead": label_result_close.get_label_df_ref().loc[:, label_result_close.look_ahead_col_name],
+    "result_label": label_result_close.get_label_series_ref(),
+    "result_look_ahead": label_result_close.get_look_ahead_series_ref(),
     "answer_label": answer_close_label_series,
     "answer_look_ahead": answer_close_look_ahead_series
 })
 
 high_compare_df = pd.DataFrame({
-    "result_label": label_result_high.get_label_df_ref().loc[:, label_result_high.label_col_name],
-    "result_look_ahead": label_result_high.get_label_df_ref().loc[:, label_result_high.look_ahead_col_name],
+    "result_label": label_result_high.get_label_series_ref(),
+    "result_look_ahead": label_result_high.get_look_ahead_series_ref(),
     "answer_label": answer_high_label_series,
     "answer_look_ahead": answer_high_look_ahead_series
 })
 
 low_compare_df = pd.DataFrame({
-    "result_label": label_result_low.get_label_df_ref().loc[:, label_result_low.label_col_name],
-    "result_look_ahead": label_result_low.get_label_df_ref().loc[:, label_result_low.look_ahead_col_name],
+    "result_label": label_result_low.get_label_series_ref(),
+    "result_look_ahead": label_result_low.get_look_ahead_series_ref(),
     "answer_label": answer_low_label_series,
     "answer_look_ahead": answer_low_look_ahead_series
 })
 
 vwap_compare_df = pd.DataFrame({
-    "result_label": label_result_vwap.get_label_df_ref().loc[:, label_result_vwap.label_col_name],
-    "result_look_ahead": label_result_vwap.get_label_df_ref().loc[:, label_result_vwap.look_ahead_col_name],
+    "result_label": label_result_vwap.get_label_series_ref(),
+    "result_look_ahead": label_result_vwap.get_look_ahead_series_ref(),
     "answer_label": answer_vwap_label_series,
     "answer_look_ahead": answer_vwap_look_ahead_series
 })

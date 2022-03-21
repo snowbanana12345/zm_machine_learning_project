@@ -37,3 +37,13 @@ test/scratch/scratch_file.py
 archive/post_trade.py
 archive/seasonal.py
 archive/test_script.py
+plots/bar_data_plots/NHK17/dollar_sampled/Dollar sampled bar -- NHK17 -- 2017-01-25 -- afternoon --  sampling dollars 
+plots/bar_data_plots/NHK17/dollar_sampled/Dollar sampled bar -- NHK17 -- 2017-01-25 -- morning --  sampling dollars 
+plots/bar_data_plots/NHK17/tick_sampled/Tick sampled bar -- NHK17 -- 2017-01-25 -- afternoon --  sampling ticks 
+plots/bar_data_plots/NHK17/tick_sampled/Tick sampled bar -- NHK17 -- 2017-01-25 -- morning --  sampling ticks 
+plots/bar_data_plots/NHK17/time_sampled/Time sampled bar -- NHK17 -- 2017-01-25 -- afternoon --  sampling seconds 
+plots/bar_data_plots/NHK17/time_sampled/Time sampled bar -- NHK17 -- 2017-01-25 -- morning --  sampling seconds 
+plots/bar_data_plots/NHK17/volume_sampled/Dollar sampled bar -- NHK17 -- 2017-01-25 -- afternoon --  sampling dollars 
+plots/bar_data_plots/NHK17/volume_sampled/Dollar sampled bar -- NHK17 -- 2017-01-25 -- morning --  sampling dollars 
+plots/bar_data_plots/NHK17/volume_sampled/Volume sampled bar -- NHK17 -- 2017-01-25 -- afternoon --  sampling volume 
+plots/bar_data_plots/NHK17/volume_sampled/Volume sampled bar -- NHK17 -- 2017-01-25 -- morning --  sampling volume 

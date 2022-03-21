@@ -27,7 +27,8 @@ def morning_after_noon_split(tick_df_wrapper : data.TickDataFrame, split_points_
 # ----- tick_data_frame_cleaning --------
 def interpolate_zero_bid_ask_prices(tick_df_wrapper : data.TickDataFrame) -> None:
     """
-    Interpolate zero entries in the bid ask prices
+    linearly Interpolate zero entries in the bid ask prices
+    This function passes by reference and do not produce a new tick data frame
     :param tick_df_wrapper: reference to the tick data frame
     :return: None
     """
@@ -49,7 +50,8 @@ def interpolate_zero_bid_ask_prices(tick_df_wrapper : data.TickDataFrame) -> Non
 
 def interpolate_zero_bid_ask_quantities(tick_df_wrapper : data.TickDataFrame) -> None:
     """
-    Interpolate zero entries in the bid ask quantities
+    linearly Interpolate zero entries in the bid ask quantities
+    This function passes by reference and do not produce a new tick data frame
     :param tick_df_wrapper: reference to the tick data frame
     :return: None
     """
@@ -70,6 +72,14 @@ def interpolate_zero_bid_ask_quantities(tick_df_wrapper : data.TickDataFrame) ->
 
 
 def interpolate_bid_ask_price_outliers(tick_df_wrapper : data.TickDataFrame, lower_threshold : float, upper_threshold : float) -> None:
+    """
+    replaces outliers linearly Interpolate zero entries in the bid ask prices
+    This function passes by reference and do not produce a new tick data frame
+    :param tick_df_wrapper: reference to the tick data frame
+    :param lower_threshold: a data point below this threshold is considered an outlier
+    :param upper_threshold: a data point above this threshold is considered an outlier
+    :return: None
+    """
     tick_df_ref : pd.DataFrame = tick_df_wrapper.get_tick_data()
     for col_name in [data.TickDataColumns.ASK1P.value,
                      data.TickDataColumns.ASK2P.value,
@@ -88,6 +98,14 @@ def interpolate_bid_ask_price_outliers(tick_df_wrapper : data.TickDataFrame, low
 
 
 def interpolate_bid_ask_quantity_outliers(tick_df_wrapper : data.TickDataFrame, outlier_threshold : int) -> None:
+    """
+    replaces outliers linearly Interpolate zero entries in the bid ask quantities
+    This function passes by reference and do not produce a new tick data frame
+    NOTE : it is assumed that all quantity data points are positive
+    :param tick_df_wrapper: reference to the tick data frame
+    :param outlier_threshold: a data point above this threshold is considered an outlier
+    :return: None
+    """
     tick_df_ref : pd.DataFrame = tick_df_wrapper.get_tick_data()
     for col_name in [data.TickDataColumns.ASK1Q.value,
                      data.TickDataColumns.ASK2Q.value,
@@ -104,13 +122,22 @@ def interpolate_bid_ask_quantity_outliers(tick_df_wrapper : data.TickDataFrame, 
         dp_logger.log_interpolate_outlier_bid_ask_quantities(tick_df_wrapper = tick_df_wrapper, col_name = col_name, outlier_threshold = outlier_threshold)
 
 def interpolate_trade_price_outliers(tick_df_wrapper : data.TickDataFrame, lower_threshold : float, upper_threshold : float) -> None:
+    """
+    linearly interpolate trade price outliers
+    This function passes by reference and do not produce a new tick data frame
+    NOTE : this function assumes that 0, price represents no trade, it performs linear interpolation on the non-zero sub series
+    :param tick_df_wrapper: reference to the tick data frame
+    :param lower_threshold: the threshold below which the price will be considered an outlier
+    :param upper_threshold: the threshold above which the price will be considered an outlier
+    :return:
+    """
     tick_df_ref : pd.DataFrame = tick_df_wrapper.get_tick_data()
     trade_price_series : pd.Series = tick_df_ref[data.TickDataColumns.LAST_PRICE.value]
     # ----- pull out the ticks that have trades ------
-    has_trade_bool_arr : [bool] = (trade_price_series > 0)
+    has_trade_bool_arr : pd.Series = (trade_price_series > 0)
     trade_price_series = trade_price_series[has_trade_bool_arr]
     # ----- remove and interpolate outlier trade prices -------
-    is_outlier_bool_arr : [bool] = np.logical_or((trade_price_series < lower_threshold), (trade_price_series > upper_threshold))
+    is_outlier_bool_arr : np.array = np.logical_or((trade_price_series < lower_threshold), (trade_price_series > upper_threshold))
     trade_price_series = trade_price_series.mask(is_outlier_bool_arr).interpolate().ffill().bfill()
     # ----- put back the interpolate trade price series ------
     tick_df_ref.loc[:, data.TickDataColumns.LAST_PRICE.value] = trade_price_series
@@ -118,6 +145,14 @@ def interpolate_trade_price_outliers(tick_df_wrapper : data.TickDataFrame, lower
     dp_logger.log_interpolate_outlier_trade_prices(tick_df_wrapper = tick_df_wrapper, lower_threshold = lower_threshold, upper_threshold = upper_threshold)
 
 def interpolate_trade_volume_outliers(tick_df_wrapper : data.TickDataFrame, outlier_threshold : int) -> None:
+    """
+    linear interpolate trade volume outliers
+    This function passes by reference and do not produce a new tick data frame
+    NOTE : this function assumes that 0 volume represents no trade, it performs linear interpolation on the non-zero sub-series
+    :param tick_df_wrapper: reference to the tick data frame
+    :param outlier_threshold: the threshold above which the quantity will be considered an outlier
+    :return:
+    """
     tick_df_ref : pd.DataFrame = tick_df_wrapper.get_tick_data()
     trade_quantity_series : pd.Series = tick_df_ref[data.TickDataColumns.LAST_QUANTITY.value]
     # ----- pull out the ticks that has trades ------
@@ -133,6 +168,12 @@ def interpolate_trade_volume_outliers(tick_df_wrapper : data.TickDataFrame, outl
 
 # -------- interpolation functions for bar data ----------
 def interpolate_bar_zero_prices(bar_wrapper : data.BarDataFrame) -> data.BarDataFrame:
+    """
+    Linearly interpolates all 0 values for each column individually except time stamp
+    NOTE : bar data tends to be much smaller than tick so for convenience we make copies instead of passing references around
+    :param bar_wrapper: a reference to the original data
+    :return: a new bar data frame with the values interpolated
+    """
     bar_copy : pd.DataFrame = bar_wrapper.get_bar_data_copy()
     for col_name in [data.BarDataColumns.OPEN.value,
                      data.BarDataColumns.CLOSE.value,

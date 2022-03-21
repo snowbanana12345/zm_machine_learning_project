@@ -14,6 +14,9 @@ def front_pad_zeros(input_str : str, total_length : int) -> str:
 
 @dataclass(frozen=True)
 class Date:
+    """
+    Custom date class
+    """
     day : int
     month : int
     year : int
@@ -49,6 +52,9 @@ class Date:
         day_str = front_pad_zeros(str(self.day), 2)
         return year_str + "-" + month_str + "-" + day_str
 
+    def __eq__(self, other):
+        return (self.day == other.day) and (self.month == other.month) and (self.year == other.year)
+
 # ------- Enums -------
 class Sampling(Enum):
     TIME = "time_sampled"
@@ -75,7 +81,6 @@ class IntraDayPeriod(Enum):
 
 
 class TickDataColumns(Enum):
-    KEY_SYMBOL = "keySymbol"
     TIMESTAMP_NANO = "timestampNano"
     LAST_PRICE = "lastPrice"
     LAST_QUANTITY = "lastQty"
@@ -198,6 +203,16 @@ class TimeBarDataFrame(BarDataFrame):
     def __str__(self):
         return f"Time sampled bar -- {self.symbol} -- {self.date.get_str_format_2()} -- {self.intra_day_period.value} -- sampling seconds : {self.sampling_seconds}"
 
+    def __eq__(self, other):
+        if not isinstance(other, TimeBarDataFrame):
+            return False
+        data_frame_eq = self.bar_data.equals(other.bar_data)
+        date_eq = self.date == other.date
+        symbol_eq = self.symbol == other.symbol
+        sampling_eq = self.sampling_seconds == other.sampling_seconds
+        intraday_eq = self.intra_day_period == other.intra_day_period
+        return data_frame_eq and date_eq and symbol_eq and intraday_eq and sampling_eq
+
 class TickBarDataFrame(BarDataFrame):
     """
     Wrapper for a pandas data frame that contains specifically intraday tick sampled bar data
@@ -248,6 +263,16 @@ class TickBarDataFrame(BarDataFrame):
     def __str__(self):
         return f"Tick sampled bar -- {self.symbol} --  {self.date.get_str_format_2()}  -- {self.intra_day_period.value}  -- sampling ticks : {self.sampling_ticks}"
 
+    def __eq__(self, other):
+        if not isinstance(other, TickBarDataFrame):
+            return False
+        data_frame_eq = self.bar_data.equals(other.bar_data)
+        date_eq = self.date == other.date
+        symbol_eq = self.symbol == other.symbol
+        sampling_eq = self.sampling_ticks == other.sampling_ticks
+        intraday_eq = self.intra_day_period == other.intra_day_period
+        return data_frame_eq and date_eq and symbol_eq and intraday_eq and sampling_eq
+
 class VolumeBarDataFrame(BarDataFrame):
     """
     Wrapper for a pandas data frame that contains specifically intraday volume sampled bar data
@@ -297,6 +322,15 @@ class VolumeBarDataFrame(BarDataFrame):
     def __str__(self):
         return f"Volume sampled bar -- {self.symbol} -- {self.date.get_str_format_2()} -- {self.intra_day_period.value} -- sampling volume : {self.sampling_volume}"
 
+    def __eq__(self, other):
+        if not isinstance(other, VolumeBarDataFrame):
+            return False
+        data_frame_eq = self.bar_data.equals(other.bar_data)
+        date_eq = self.date == other.date
+        symbol_eq = self.symbol == other.symbol
+        sampling_eq = self.sampling_volume == other.sampling_volume
+        intraday_eq = self.intra_day_period == other.intra_day_period
+        return data_frame_eq and date_eq and symbol_eq and intraday_eq and sampling_eq
 
 class DollarBarDataFrame(BarDataFrame):
     """
@@ -348,6 +382,16 @@ class DollarBarDataFrame(BarDataFrame):
     def __str__(self):
         return f"Dollar sampled bar -- {self.symbol} -- {self.date.get_str_format_2()}  -- {self.intra_day_period.value} --  sampling dollars : {self.sampling_dollar}"
 
+    def __eq__(self, other):
+        if not isinstance(other, DollarBarDataFrame):
+            return False
+        data_frame_eq = self.bar_data.equals(other.bar_data)
+        date_eq = self.date == other.date
+        symbol_eq = self.symbol == other.symbol
+        sampling_eq = self.sampling_dollar == other.sampling_dollar
+        intraday_eq = self.intra_day_period == other.intra_day_period
+        return data_frame_eq and date_eq and symbol_eq and intraday_eq and sampling_eq
+
 
 # -------- Tick data frame --------
 class TickDataFrame:
@@ -360,7 +404,6 @@ class TickDataFrame:
     Enforces ranged indexing for the underlying dataframe
     """
     REQUIRED_COLUMNS = [
-        TickDataColumns.KEY_SYMBOL,
         TickDataColumns.TIMESTAMP_NANO,
         TickDataColumns.LAST_PRICE,
         TickDataColumns.LAST_QUANTITY,
@@ -402,7 +445,7 @@ class TickDataFrame:
         # ----- enforce ranged indexing for data frame ------
         self.tick_data.index = pd.RangeIndex(len(self.tick_data))
 
-    def get_tick_data(self):
+    def get_tick_data(self) -> pd.DataFrame:
         """ return a reference to tick data frame """
         return self.tick_data
 
@@ -413,6 +456,14 @@ class TickDataFrame:
     def __str__(self):
         return self.symbol + " -- " + self.date.get_str_format_2() + " -- " + self.intra_day_period.value
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, TickDataFrame):
+            return False
+        data_frame_eq = self.tick_data.equals(other.tick_data)
+        date_eq = self.date == other.date
+        symbol_eq = self.symbol == other.symbol
+        intra_day_eq = self.intra_day_period == other.intra_day_period
+        return data_frame_eq and date_eq and symbol_eq and intra_day_eq
 
 # -------- custom exceptions ---------
 class TickRequiredColumnNotFound(Exception):

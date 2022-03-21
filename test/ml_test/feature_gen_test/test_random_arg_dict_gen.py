@@ -1,4 +1,4 @@
-from src.machine_learning_module.utils.random_feature_generators import RandomArgumentGen, RandomParaDictGenerator
+from src.machine_learning_module.utils.random_feature_generators import RandomArgumentGen, RandomParaDictGenerator, create_random_param_gen
 import src.machine_learning_module.feature_generator_data.talib_momentum as talib_mom_data
 from typing import Dict, List, Any
 
@@ -55,6 +55,7 @@ repeats_dict = {
     talib_mom_data.WILLR: 2
 }
 
+"""
 arg_dict_gen_dict  : Dict[str, RandomArgumentGen] = {}
 for feat_name in talib_mom_data.FEATURE_NAME_LIST:
     arg_dict_gen : RandomArgumentGen = talib_mom_data.UNIFORM_ARG_DICT_GEN_GEN_FUNC[feat_name](**arg_dict_gen_param_dict[feat_name])
@@ -62,6 +63,12 @@ for feat_name in talib_mom_data.FEATURE_NAME_LIST:
 
 param_dict_gen : RandomParaDictGenerator = RandomParaDictGenerator(generator_dict = arg_dict_gen_dict, repeats_dict = repeats_dict)
 para_dict : Dict[str, List[Dict[str, Any]]] = param_dict_gen.generate_param_dict()
+"""
+param_dict_gen : RandomParaDictGenerator = create_random_param_gen(arg_dict_gen_param_dict = arg_dict_gen_param_dict,
+                                                                   feature_name_list = talib_mom_data.FEATURE_NAME_LIST,
+                                                                   arg_dict_gen_func = talib_mom_data.UNIFORM_ARG_DICT_GEN_GEN_FUNC,
+                                                                   repeats_dict = repeats_dict)
+para_dict = param_dict_gen.generate_param_dict()
 
 for feat_name, arg_dict_lst in para_dict.items():
     print(f"Feature : {feat_name}")

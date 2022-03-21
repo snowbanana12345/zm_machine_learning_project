@@ -3,6 +3,7 @@ from src.general_module.custom_exceptions import ArrayLengthMisMatchException
 import numpy as np
 import pandas as pd
 from typing import List
+import math
 
 
 @dataclass(frozen=True)
@@ -83,9 +84,9 @@ def find_binary_classification_metrics(predicted: np.array, actual: np.array) ->
     # ----- precision, recall, specificity, f1 score ------
     precision = true_positive_num / num_pred_positives if num_pred_positives > 0 else 0
     recall = true_positive_num / (true_positive_num + false_negative_num) if (
-                                                                                         true_positive_num + false_negative_num) > 0 else 0
+                                                                                     true_positive_num + false_negative_num) > 0 else 0
     specificity = true_negative_num / (true_negative_num + false_positive_num) if (
-                                                                                              true_negative_num + false_positive_num) > 0 else 0
+                                                                                          true_negative_num + false_positive_num) > 0 else 0
     f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
     # ----- return BinaryClassificationMetrics data class -----
     return BinaryClassificationMetrics(accuracy=accuracy, num_examples=num_examples,
@@ -98,7 +99,12 @@ def find_binary_classification_metrics(predicted: np.array, actual: np.array) ->
 
 
 class CollatedBinaryClassificationMetrics:
-    def __init__(self, *metrics: BinaryClassificationMetrics):
+    def __init__(self, metrics: List[BinaryClassificationMetrics], weights: List[float] = None):
+        # ---- check if weights and the metrics have the same length -----
+        if weights and not len(metrics) == len(weights):
+            raise ArrayLengthMisMatchException(len(metrics), len(weights), "metrics", "weights")
+        self.weights = weights
+        # ---- initialize lists -----
         self.accuracy_lst: List[float] = []
         self.num_examples_lst: List[int] = []
         self.num_pred_positives_lst: List[int] = []
@@ -145,7 +151,7 @@ class CollatedBinaryClassificationMetrics:
             "recall": self.recall_lst,
             "specificity": self.specificity_lst,
             "f1 score": self.f1_score_lst,
-        })
+        }, index=range(1, len(metrics) + 1))
 
         # ------ compute statistics --------
         self.mean_accuracy: float = float(np.mean(self.accuracy_lst))
@@ -186,8 +192,80 @@ class CollatedBinaryClassificationMetrics:
                   "specificity",
                   "f1 score"])
 
+        # ----- computed weighted mean and standard deviations ------
+        self.weighted_mean_accuracy: float = self.find_weighted_average(self.accuracy_lst,
+                                                                        weights=weights) if weights else None
+        self.weighted_sd_accuracy: float = self.find_weighted_sd(self.accuracy_lst,
+                                                                 weights=weights) if weights else None
+        self.weighted_mean_true_positive_rate: float = self.find_weighted_average(self.true_positive_rate_lst,
+                                                                                  weights=weights) if weights else None
+        self.weighted_sd_true_positive_rate: float = self.find_weighted_sd(self.true_negative_rate_lst,
+                                                                           weights=weights) if weights else None
+        self.weighted_mean_false_positive_rate: float = self.find_weighted_average(self.false_positive_rate_lst,
+                                                                                   weights=weights) if weights else None
+        self.weighted_sd_false_positive_rate: float = self.find_weighted_sd(self.false_positive_rate_lst,
+                                                                            weights=weights) if weights else None
+        self.weighted_mean_true_negative_rate: float = self.find_weighted_average(self.true_negative_rate_lst,
+                                                                                  weights=weights) if weights else None
+        self.weighted_sd_true_negative_rate: float = self.find_weighted_sd(self.true_negative_rate_lst,
+                                                                           weights=weights) if weights else None
+        self.weighted_mean_false_negative_rate: float = self.find_weighted_average(self.false_negative_rate_lst,
+                                                                                   weights=weights) if weights else None
+        self.weighted_sd_false_negative_rate: float = self.find_weighted_sd(self.false_negative_rate_lst,
+                                                                            weights=weights) if weights else None
+        self.weighted_mean_precision: float = self.find_weighted_average(self.precision_lst,
+                                                                         weights=weights) if weights else None
+        self.weighted_sd_precision: float = self.find_weighted_sd(self.precision_lst,
+                                                                  weights=weights) if weights else None
+        self.weighted_mean_recall: float = self.find_weighted_average(self.recall_lst,
+                                                                      weights=weights) if weights else None
+        self.weighted_sd_recall: float = self.find_weighted_sd(self.recall_lst, weights=weights) if weights else None
+        self.weighted_mean_specificity: float = self.find_weighted_average(self.specificity_lst,
+                                                                           weights=weights) if weights else None
+        self.weighted_sd_specificity: float = self.find_weighted_sd(self.specificity_lst,
+                                                                    weights=weights) if weights else None
+        self.weighted_mean_f1_score: float = self.find_weighted_average(self.f1_score_lst,
+                                                                        weights=weights) if weights else None
+        self.weighted_sd_f1_score: float = self.find_weighted_sd(self.f1_score_lst,
+                                                                 weights=weights) if weights else None
+
+        self.weighted_stats_table = pd.DataFrame({
+            "weighted_mean": [self.weighted_mean_accuracy, self.weighted_mean_true_positive_rate,
+                              self.weighted_mean_false_positive_rate,
+                              self.weighted_mean_true_negative_rate, self.weighted_mean_false_negative_rate,
+                              self.weighted_mean_precision,
+                              self.weighted_mean_recall, self.weighted_mean_specificity,
+                              self.weighted_mean_f1_score],
+            "weighted_sd": [self.weighted_sd_accuracy, self.weighted_sd_true_positive_rate,
+                            self.weighted_sd_false_positive_rate,
+                            self.weighted_sd_true_negative_rate,
+                            self.weighted_sd_false_negative_rate, self.weighted_sd_precision, self.weighted_sd_recall
+                            , self.weighted_sd_specificity,
+                            self.weighted_sd_f1_score],
+        }, index=["accuracy",
+                  "true positive rates",
+                  "false positive rates",
+                  "true negative rates",
+                  "false negative rates",
+                  "precision",
+                  "recall",
+                  "specificity",
+                  "f1 score"]) if weights else None
+
+    @staticmethod
+    def find_weighted_average(numbers: List[float], weights: List[float]) -> float:
+        return np.average(numbers, weights=weights)
+
+    @staticmethod
+    def find_weighted_sd(numbers: List[float], weights: List[float]) -> float:
+        mean: float = np.average(numbers)
+        return math.sqrt(np.average([(num - mean) * (num - mean) for num in numbers], weights=weights))
+
     def print(self):
-        print(" ------ mean and sd on metrics ------- ")
+        print(" ------ mean and sd on binary classification metrics ------- ")
         print(self.stats_table)
+        if self.weights:
+            print(" ------ weighted mean and sd on classification metrics --------")
+            print(self.weighted_stats_table)
         print(" ------ numbers for each run ------- ")
         print(self.raw_table)

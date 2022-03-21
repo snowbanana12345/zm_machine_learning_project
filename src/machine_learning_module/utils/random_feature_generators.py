@@ -39,3 +39,14 @@ class RandomParaDictGenerator:
                 new_param_dict[feat_name].append(arg_dict_gen.generate_arg_dict())
         return new_param_dict
 
+
+def create_random_param_gen(arg_dict_gen_param_dict : Dict[str, Dict[str, Any]],
+                            feature_name_list : List[str],
+                            arg_dict_gen_func : Dict[str, callable],
+                            repeats_dict : Dict[str, int]) -> RandomParaDictGenerator:
+    arg_dict_gen_dict: Dict[str, RandomArgumentGen] = {}
+    for feat_name in feature_name_list:
+        arg_dict_gen_dict[feat_name] = arg_dict_gen_func[feat_name](**arg_dict_gen_param_dict[feat_name])
+    return RandomParaDictGenerator(generator_dict=arg_dict_gen_dict, repeats_dict=repeats_dict)
+
+

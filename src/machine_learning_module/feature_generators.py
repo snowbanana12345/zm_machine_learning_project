@@ -36,6 +36,10 @@ class FeatureDataFrame:
     def __len__(self):
         return len(self.feature_df)
 
+    def update_dataframe(self, new_feature_df : pd.DataFrame):
+        return FeatureDataFrame(feature_df = new_feature_df, parameter_dict = self.parameter_dict,
+                                feature_generator_name_lst = self.feature_generator_name_lst, dataset_description_lst = self.dataset_description_lst)
+
 
 EMPTY_FEATURE_DATA_FRAME: FeatureDataFrame = FeatureDataFrame(feature_df=pd.DataFrame(), parameter_dict={},
                                                               feature_generator_name_lst=[], dataset_description_lst=[])
