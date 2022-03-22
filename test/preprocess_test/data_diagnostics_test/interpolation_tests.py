@@ -8,7 +8,6 @@ AFTERNOON = dat_blocks.IntraDayPeriod.AFTERNOON
 WHOLE_DAY = dat_blocks.IntraDayPeriod.WHOLE_DAY
 
 class TestInterpolate(unittest.TestCase):
-
     def setUp(self):
         time_stamp_row = [12, 25, 58, 90, 107, 111, 150, 160, 179, 185]
         time_stamp_row = [ts * 3600 * 1E9 for ts in time_stamp_row]
@@ -63,6 +62,7 @@ class TestInterpolate(unittest.TestCase):
 
         self.test_date = dat_blocks.Date(day = 1, month = 1, year = 1000)
         self.test_symbol = "TEST"
+
 
     def test_morning_afternoon_split(self):
         tick_wrapper = dat_blocks.TickDataFrame(tick_df = self.example_tick_df, date = self.test_date, symbol = self.test_symbol, intra_day_period = WHOLE_DAY)
@@ -197,21 +197,76 @@ class TestInterpolate(unittest.TestCase):
         self.assertEqual(tick_wrapper, expected_tick_wrapper, "Intepolate_zero_bid_ask_prices")
 
     def test_interpolate_zero_bid_ask_quantities(self):
-        self.assertTrue(True)
+        expected_tick_df = self.example_tick_df.copy()
+        self.example_tick_df.loc[:, dat_blocks.TickDataColumns.ASK1Q.value] = [2.0, 4.0, 0.0, 0.0, 10.0, 9.0, 5.0, 4.0, 3.0, 2.0]
+        self.example_tick_df.loc[:, dat_blocks.TickDataColumns.BID4Q.value] = [0.0, 6.0, 9.0, 8.0, 1.0, 2.0, 3.0, 4.0, 5.0, 10.0]
+        tick_wrapper = dat_blocks.TickDataFrame(tick_df=self.example_tick_df, date=self.test_date,symbol=self.test_symbol, intra_day_period=MORNING)
+        dat_clean.interpolate_zero_bid_ask_quantities(tick_df_wrapper=tick_wrapper)
+        expected_tick_df.loc[:, dat_blocks.TickDataColumns.ASK1Q.value] = [2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 5.0, 4.0, 3.0, 2.0]
+        expected_tick_df.loc[:, dat_blocks.TickDataColumns.BID4Q.value] = [6.0, 6.0, 9.0, 8.0, 1.0, 2.0, 3.0, 4.0, 5.0, 10.0]
+        expected_tick_wrapper = dat_blocks.TickDataFrame(tick_df=expected_tick_df, date=self.test_date,symbol=self.test_symbol, intra_day_period=MORNING)
+        self.assertEqual(tick_wrapper, expected_tick_wrapper, "Intepolate_zero_bid_ask_quantites")
 
-    def interpolate_bid_ask_price_outliers(self):
-        self.assertTrue(True)
+    def test_interpolate_bid_ask_price_outliers(self):
+        """ the function is not modifying the input tick data frame """
+        upper_limit = 300
+        lower_limit = 100
+        tick_df = self.example_tick_df.copy()
+        expected_tick_df = self.example_tick_df.copy()
+        tick_df.loc[:, dat_blocks.TickDataColumns.ASK3P.value] = [191.0, 192.0, 301.0, 193.0, 195.0, 196.0 ,197.0, 99.0, 199.0, 198.0]
+        tick_df.loc[:, dat_blocks.TickDataColumns.BID5P.value] = [50.0, 191.0, 192.0, 192.0, 194.0, 195.0,197.0, 197.0, 198.0, 400.0]
+        tick_wrapper = dat_blocks.TickDataFrame(tick_df=tick_df, date=self.test_date,symbol=self.test_symbol, intra_day_period=MORNING)
+        dat_clean.interpolate_bid_ask_price_outliers(tick_df_wrapper=tick_wrapper, lower_threshold = lower_limit, upper_threshold = upper_limit)
+        expected_tick_df.loc[:, dat_blocks.TickDataColumns.ASK3P.value] = [191.0, 192.0, 192.5, 193.0, 195.0, 196.0 ,197.0, 198.0, 199.0, 198.0]
+        expected_tick_df.loc[:, dat_blocks.TickDataColumns.BID5P.value] = [191.0, 191.0, 192.0, 192.0, 194.0, 195.0,197.0, 197.0, 198.0, 198.8]
+        expected_tick_wrapper = dat_blocks.TickDataFrame(tick_df=expected_tick_df, date=self.test_date,symbol=self.test_symbol, intra_day_period=MORNING)
+        self.assertTrue(tick_df.equals(expected_tick_df))
+        self.assertEqual(tick_wrapper, expected_tick_wrapper, "interpolate bid ask price outliers")
 
-    def interpolate_bid_ask_quantity_outliers(self):
-        self.assertTrue(True)
+    def test_interpolate_bid_ask_quantity_outliers(self):
+        """ the function is not modifying the input tick data frame """
+        upper_limit = 30
+        lower_limit = 5
+        tick_df = self.example_tick_df.copy()
+        expected_tick_df = self.example_tick_df.copy()
+        tick_df.loc[:, dat_blocks.TickDataColumns.ASK4Q.value] = [15.0, 16.0, 17.0, 20.0, 5.0, 10.0, 12.0, 13.0, 30.0, 20.0]
+        tick_df.loc[:, dat_blocks.TickDataColumns.BID1Q.value] = [35.0, 16.0, 17.0, 20.0, 13.0, 10.0, 12.0, 13.0, 17.0, 1.0]
+        tick_wrapper = dat_blocks.TickDataFrame(tick_df=tick_df, date=self.test_date,symbol=self.test_symbol, intra_day_period=MORNING)
+        dat_clean.interpolate_bid_ask_price_outliers(tick_df_wrapper=tick_wrapper, lower_threshold = lower_limit, upper_threshold = upper_limit)
+        expected_tick_df.loc[:, dat_blocks.TickDataColumns.ASK4Q.value] = [15.0, 16.0, 17.0, 20.0, 13.0, 10.0, 12.0, 13.0, 17.0, 20.0]
+        expected_tick_df.loc[:, dat_blocks.TickDataColumns.BID1Q.value] = [16.0, 16.0, 17.0, 20.0, 13.0, 10.0, 12.0, 13.0, 17.0, 17.0]
+        expected_tick_wrapper = dat_blocks.TickDataFrame(tick_df=expected_tick_df, date=self.test_date,symbol=self.test_symbol, intra_day_period=MORNING)
+        self.assertTrue(tick_df.equals(expected_tick_df))
+        self.assertEqual(tick_wrapper, expected_tick_wrapper, "interpolate bid ask price outliers")
 
-    def interpolate_trade_price_outliers(self):
-        pass
 
-    def interpolate_trade_volume_outliers(self):
-        pass
+    def test_interpolate_trade_price_outliers(self):
+        upper_limit = 315
+        lower_limit = 160
+        tick_df = self.example_tick_df.copy()
+        expected_tick_df = self.example_tick_df.copy()
+        tick_df.loc[:, dat_blocks.TickDataColumns.LAST_PRICE.value] = [190.0, 187.0, 0.0, 150.0, 186.0, 190.0, 0.0, 320.0, 0.0, 200.0]
+        tick_wrapper = dat_blocks.TickDataFrame(tick_df=tick_df, date=self.test_date, symbol=self.test_symbol,intra_day_period=MORNING)
+        dat_clean.interpolate_bid_ask_price_outliers(tick_df_wrapper=tick_wrapper, lower_threshold=lower_limit,upper_threshold=upper_limit)
+        expected_tick_df.loc[:, dat_blocks.TickDataColumns.LAST_PRICE.value] = [190.0, 187.0, 0.0, 186.5, 186.0, 190.0, 0.0 , 195.0, 0.0, 200.0]
+        expected_tick_wrapper = dat_blocks.TickDataFrame(tick_df=expected_tick_df, date=self.test_date,symbol=self.test_symbol, intra_day_period=MORNING)
+        self.assertTrue(tick_df.equals(expected_tick_df))
+        self.assertEqual(tick_wrapper, expected_tick_wrapper, "interpolate trade price outliers")
 
-    def interpolate_bar_zero_prices(self):
+    def test_interpolate_trade_volume_outliers(self):
+        upper_limit = 100.0
+        lower_limit = 30.0
+        tick_df = self.example_tick_df.copy()
+        expected_tick_df = self.example_tick_df.copy()
+        tick_df.loc[:, dat_blocks.TickDataColumns.LAST_QUANTITY.value] = [50.0, 0.0, 20.0, 45.0, 0.0, 55.0, 65.0, 75.0, 150.0, 65.0]
+        tick_wrapper = dat_blocks.TickDataFrame(tick_df=tick_df, date=self.test_date, symbol=self.test_symbol,intra_day_period=MORNING)
+        dat_clean.interpolate_bid_ask_price_outliers(tick_df_wrapper=tick_wrapper, lower_threshold=lower_limit, upper_threshold=upper_limit)
+        expected_tick_df.loc[:, dat_blocks.TickDataColumns.LAST_QUANTITY.value] = [50.0, 0.0, 47.5, 45.0, 0.0, 55.0, 65.0, 75.0, 70.0, 65.0]
+        expected_tick_wrapper = dat_blocks.TickDataFrame(tick_df=expected_tick_df, date=self.test_date,symbol=self.test_symbol, intra_day_period=MORNING)
+        self.assertTrue(tick_df.equals(expected_tick_df))
+        self.assertEqual(tick_wrapper, expected_tick_wrapper, "interpolate bid ask price outliers")
+
+    def test_interpolate_bar_zero_prices(self):
         pass
 
 if __name__ == '__main__':

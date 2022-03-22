@@ -204,6 +204,7 @@ class TimeBarDataFrame(BarDataFrame):
         return f"Time sampled bar -- {self.symbol} -- {self.date.get_str_format_2()} -- {self.intra_day_period.value} -- sampling seconds : {self.sampling_seconds}"
 
     def __eq__(self, other):
+        """ NOTE : this equality condition fails when comparing floats with int even if the values are the same """
         if not isinstance(other, TimeBarDataFrame):
             return False
         data_frame_eq = self.bar_data.equals(other.bar_data)
@@ -264,6 +265,7 @@ class TickBarDataFrame(BarDataFrame):
         return f"Tick sampled bar -- {self.symbol} --  {self.date.get_str_format_2()}  -- {self.intra_day_period.value}  -- sampling ticks : {self.sampling_ticks}"
 
     def __eq__(self, other):
+        """ NOTE : this equality condition fails when comparing floats with int even if the values are the same """
         if not isinstance(other, TickBarDataFrame):
             return False
         data_frame_eq = self.bar_data.equals(other.bar_data)
@@ -323,6 +325,7 @@ class VolumeBarDataFrame(BarDataFrame):
         return f"Volume sampled bar -- {self.symbol} -- {self.date.get_str_format_2()} -- {self.intra_day_period.value} -- sampling volume : {self.sampling_volume}"
 
     def __eq__(self, other):
+        """ NOTE : this equality condition fails when comparing floats with int even if the values are the same """
         if not isinstance(other, VolumeBarDataFrame):
             return False
         data_frame_eq = self.bar_data.equals(other.bar_data)
@@ -383,6 +386,7 @@ class DollarBarDataFrame(BarDataFrame):
         return f"Dollar sampled bar -- {self.symbol} -- {self.date.get_str_format_2()}  -- {self.intra_day_period.value} --  sampling dollars : {self.sampling_dollar}"
 
     def __eq__(self, other):
+        """ NOTE : this equality condition fails when comparing floats with int even if the values are the same """
         if not isinstance(other, DollarBarDataFrame):
             return False
         data_frame_eq = self.bar_data.equals(other.bar_data)
@@ -457,6 +461,7 @@ class TickDataFrame:
         return self.symbol + " -- " + self.date.get_str_format_2() + " -- " + self.intra_day_period.value
 
     def __eq__(self, other) -> bool:
+        """ NOTE : this equality condition fails when comparing floats with int even if the values are the same """
         if not isinstance(other, TickDataFrame):
             return False
         data_frame_eq = self.tick_data.equals(other.tick_data)

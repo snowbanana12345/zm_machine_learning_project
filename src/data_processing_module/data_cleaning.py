@@ -31,6 +31,7 @@ def interpolate_zero_bid_ask_prices(tick_df_wrapper : data.TickDataFrame) -> Non
     This function passes by reference and do not produce a new tick data frame
     :param tick_df_wrapper: reference to the tick data frame
     :return: None
+    NOTE : this function will convert entries from int to float in the columns where interpolation has occurred
     """
     tick_df_ref : pd.DataFrame = tick_df_wrapper.get_tick_data()
     for col_name in [data.TickDataColumns.ASK1P.value,
@@ -54,6 +55,7 @@ def interpolate_zero_bid_ask_quantities(tick_df_wrapper : data.TickDataFrame) ->
     This function passes by reference and do not produce a new tick data frame
     :param tick_df_wrapper: reference to the tick data frame
     :return: None
+    NOTE : this function will convert entries from int to float in the columns where interpolation has occurred
     """
     tick_df_ref : pd.DataFrame = tick_df_wrapper.get_tick_data()
     for col_name in [data.TickDataColumns.ASK1Q.value,
