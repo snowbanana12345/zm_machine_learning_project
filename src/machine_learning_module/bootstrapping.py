@@ -21,11 +21,11 @@ class BootStrapMatrix:
         # --- store ---
         self.boot_strap_arr : np.array = boot_strap_arr
 
-    def get_rows_it(self) -> Iterator[np.array]:
+    def get_matrix(self) -> np.array:
         """
         :return: Iterator that produces a bootstrap array
         """
-        return iter(self.boot_strap_arr)
+        return self.boot_strap_arr
 
 MAX_BOOTSTRAPS_ALLOWED = 10000
 

@@ -182,8 +182,7 @@ def interpolate_bar_zero_prices(bar_wrapper : data.BarDataFrame) -> data.BarData
                      data.BarDataColumns.HIGH.value,
                      data.BarDataColumns.LOW.value,
                      data.BarDataColumns.VWAP.value,
-                     data.BarDataColumns.VOLUME.value,
-                     data.BarDataColumns.TIMESTAMP.value]:
+                     data.BarDataColumns.VOLUME.value]:
         series : pd.Series = bar_copy[col_name]
         bar_copy[col_name] = series.mask(series == 0).interpolate().ffill().bfill()
     new_bar_wrapper : data.BarDataFrame = bar_wrapper.create_empty_copy()

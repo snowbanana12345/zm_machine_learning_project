@@ -267,7 +267,58 @@ class TestInterpolate(unittest.TestCase):
         self.assertEqual(tick_wrapper, expected_tick_wrapper, "interpolate bid ask price outliers")
 
     def test_interpolate_bar_zero_prices(self):
-        pass
+        timestamps = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        open_prices = [0, 10, 12, 13, 9, 7, 5, 8, 9, 10]
+        close_prices = [6, 7, 8, 10, 12, 13, 16, 5, 4, 3]
+        high_prices = [4, 5, 6, 10, 0, 7, 5, 4, 2, 3]
+        low_prices = [5, 6, 2, 3, 4, 5, 9, 8, 7, 0]
+        vwap_prices = [20, 21, 22, 0, 24, 25, 26, 27, 28, 29]
+        volumes = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+        open_prices = [float(x) for x in open_prices]
+        close_prices = [float(x) for x in close_prices]
+        high_prices = [float(x) for x in high_prices]
+        low_prices = [float(x) for x in low_prices]
+        vwap_prices = [float(x) for x in vwap_prices]
+        bar_df = pd.DataFrame({
+            dat_blocks.BarDataColumns.TIMESTAMP.value : timestamps,
+            dat_blocks.BarDataColumns.OPEN.value: open_prices,
+            dat_blocks.BarDataColumns.CLOSE.value: close_prices,
+            dat_blocks.BarDataColumns.HIGH.value: high_prices,
+            dat_blocks.BarDataColumns.LOW.value: low_prices,
+            dat_blocks.BarDataColumns.VWAP.value: vwap_prices,
+            dat_blocks.BarDataColumns.VOLUME.value: volumes,
+        })
+
+        bar_wrapper = dat_blocks.BarDataFrame(symbol = self.test_symbol)
+        bar_wrapper.set_data_frame(bar_df)
+        result_bar_wrapper = dat_clean.interpolate_bar_zero_prices(bar_wrapper)
+
+        exp_timestamps = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        exp_open_prices = [10, 10, 12, 13, 9, 7, 5, 8, 9, 10]
+        exp_close_prices = [6, 7, 8, 10, 12, 13, 16, 5, 4, 3]
+        exp_high_prices = [4, 5, 6, 10, 8.5, 7, 5, 4, 2, 3]
+        exp_low_prices = [5, 6, 2, 3, 4, 5, 9, 8, 7, 7]
+        exp_vwap_prices = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+        exp_volumes = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+        exp_open_prices = [float(x) for x in exp_open_prices]
+        exp_close_prices = [float(x) for x in exp_close_prices]
+        exp_high_prices = [float(x) for x in exp_high_prices]
+        exp_low_prices = [float(x) for x in exp_low_prices]
+        exp_vwap_prices = [float(x) for x in exp_vwap_prices]
+
+        exp_bar_df = pd.DataFrame({
+            dat_blocks.BarDataColumns.TIMESTAMP.value : exp_timestamps,
+            dat_blocks.BarDataColumns.OPEN.value: exp_open_prices,
+            dat_blocks.BarDataColumns.CLOSE.value: exp_close_prices,
+            dat_blocks.BarDataColumns.HIGH.value: exp_high_prices,
+            dat_blocks.BarDataColumns.LOW.value: exp_low_prices,
+            dat_blocks.BarDataColumns.VWAP.value: exp_vwap_prices,
+            dat_blocks.BarDataColumns.VOLUME.value: exp_volumes,
+        })
+
+        exp_bar_wrapper = dat_blocks.BarDataFrame(symbol = self.test_symbol)
+        exp_bar_wrapper.set_data_frame(exp_bar_df)
+        self.assertEqual(result_bar_wrapper, exp_bar_wrapper, "bar_wrapper")
 
 if __name__ == '__main__':
     unittest.main()

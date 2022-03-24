@@ -153,6 +153,11 @@ class BarDataFrame:
     def __len__(self) -> int:
         return len(self.bar_data)
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, BarDataFrame):
+            return False
+        return self.bar_data.equals(other.bar_data) and (self.symbol == other.symbol)
+
 
 class TimeBarDataFrame(BarDataFrame):
     """

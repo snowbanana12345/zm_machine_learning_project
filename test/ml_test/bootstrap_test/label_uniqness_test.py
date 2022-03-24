@@ -38,7 +38,7 @@ class LabelUniquenessTest(unittest.TestCase):
                                                                                  bar_data_description = "TEST")
 
         # ----- correct answer ------
-        correct_overlap_arr : np.array = np.array([[1, 1, 2, 2, 1, 0, 1, 1, 2, 2, 2, 3, 3]])
+        # correct_overlap_arr : np.array = np.array([[1, 1, 2, 2, 1, 0, 1, 1, 2, 2, 2, 3, 3]])
         correct_uniqueness_arr : np.array = np.zeros(13).astype(np.float_)
         correct_uniqueness_arr[0] = (1 + 1 + 1/2 + 1/2 + 1) / 5 # 0.80
         correct_uniqueness_arr[2] = (1/2 + 1/2) / 2 # 0.5
