@@ -4,8 +4,9 @@ from src.machine_learning_module.filter_generators import FilterArray
 import src.machine_learning_module.machine_learning_logger as ml_logger
 import numpy as np
 import pandas as pd
-from typing import Iterator
 import random
+
+
 
 
 class BootStrapMatrix:
@@ -48,7 +49,6 @@ class BootStrapGenerator:
             raise ValueError(f"Maximum number of bootstraps exceeded : {num_bootstraps} -- Maximum : {MAX_BOOTSTRAPS_ALLOWED}")
 
 class RandomBootStrapGenerator(BootStrapGenerator):
-
     def __init__(self, sample_portion : float):
         super().__init__()
         if not 0 <= sample_portion <= 1:
