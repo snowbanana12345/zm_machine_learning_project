@@ -52,7 +52,7 @@ def filter_features_and_labels(feature_wrapper : feature_gen_mod.FeatureDataFram
         raise ArrayLengthMisMatchException(array_1_length=len(feature_wrapper), array_2_length=len(filter_array),
                                            array_1_description="feature data frame ", array_2_description="filter array")
     # ------- compute set of indices that can be used as training examples ------
-    feature_df : pd.DataFrame = feature_wrapper.get_feature_df_ref()
+    feature_df : pd.DataFrame = feature_wrapper.get_feature_df()
     label_series : pd.Series = label_wrapper.get_label_series_ref()
     look_ahead_series : pd.Series = label_wrapper.get_look_ahead_series_ref()
     valid_feature_df_indices : Set[int] = set(feature_df.dropna().index)
@@ -154,8 +154,8 @@ def cross_validate_binary_classification(feature_wrapper_lst : List[feature_gen_
     test_cross_val_result_lst : List[perf_mod.BinaryClassificationMetrics] = []
     for number_completed, (train_indices, test_indices) in enumerate(cross_val_indices):
         ml_model = sklearn_base.clone(ml_model_template)
-        train_feature_df : pd.DataFrame = pd.concat([feature_wrapper_lst[index].get_feature_df_ref() for index in train_indices], ignore_index=True, axis = 0)
-        test_feature_df : pd.DataFrame = pd.concat([feature_wrapper_lst[index].get_feature_df_ref() for index in test_indices], ignore_index=True, axis = 0)
+        train_feature_df : pd.DataFrame = pd.concat([feature_wrapper_lst[index].get_feature_df() for index in train_indices], ignore_index=True, axis = 0)
+        test_feature_df : pd.DataFrame = pd.concat([feature_wrapper_lst[index].get_feature_df() for index in test_indices], ignore_index=True, axis = 0)
         train_label_series : pd.Series = pd.concat([label_array_lst[index].get_label_series_ref() for index in train_indices], axis = 0)
         test_label_series : pd.Series = pd.concat([label_array_lst[index].get_label_series_ref() for index in test_indices], axis = 0)
         ml_model.fit(train_feature_df, train_label_series)

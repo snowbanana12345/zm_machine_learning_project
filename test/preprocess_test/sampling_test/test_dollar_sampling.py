@@ -110,25 +110,12 @@ class DollarSamplingTest(unittest.TestCase):
         bar4 = {BarDataColumns.TIMESTAMP.value: 1545, BarDataColumns.OPEN.value: 10, BarDataColumns.CLOSE.value: 5,
                 BarDataColumns.HIGH.value: 20, BarDataColumns.LOW.value: 5, BarDataColumns.VWAP.value: 100 / 10,
                 BarDataColumns.VOLUME.value: 10}
-        answer_bar_df = pd.DataFrame([bar1, bar2, bar3, bar4])
+        expected_bar_df = pd.DataFrame([bar1, bar2, bar3, bar4])
         # ------ create gibberish column to test redundant column removal of VolumeDataFrame Wrapper class ------
-        answer_bar_df["hachoooo_hachoooo"] = 1
-        answer_bar_wrapper = DollarBarDataFrame(bar_df=answer_bar_df, sampling_dollar=100, date=self.test_date,
+        expected_bar_df["hachoooo_hachoooo"] = 1
+        expected_bar_wrapper = DollarBarDataFrame(bar_df=expected_bar_df, sampling_dollar=100, date=self.test_date,
                                                    intra_day_period=IntraDayPeriod.WHOLE_DAY, symbol="TEST",
                                                    deep_copy=False)
         result_bar_wrapper = sampler.dollar_sampling(self.tick_df_wrapper, sampling_dollar=100)
 
-        try :
-            self.assertEqual(answer_bar_wrapper, result_bar_wrapper)
-        except AssertionError:
-            expected_df = answer_bar_wrapper.get_bar_data_reference()
-            result_df = result_bar_wrapper.get_bar_data_reference()
-            expected_df.columns = [header + "_expected" for header in expected_df.columns]
-            result_df.columns = [header + "_result" for header in result_df.columns]
-            combine_dict = {}
-            for expected_name, result_name, in zip(expected_df.columns, result_df.columns):
-                combine_dict[result_name] = result_df[result_name]
-                combine_dict[expected_name] = expected_df[expected_name]
-            combined_df = pd.DataFrame(combine_dict)
-            print(combined_df)
-
+        self.assertTrue(all(expected_bar_wrapper.get_bar_data_reference() == result_bar_wrapper.get_bar_data_reference()))

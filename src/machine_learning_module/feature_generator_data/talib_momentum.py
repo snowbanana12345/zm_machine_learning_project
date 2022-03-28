@@ -186,7 +186,6 @@ import random
 class IntRandomGenUniform(RandomArgumentGen):
     def __init__(self, range_dict : Dict[str, Tuple[int, int]]):
         """
-
         :param range_dict: Dictionary of the format : Dict[feature name, Tuple[min, max]]
         """
         super().__init__()

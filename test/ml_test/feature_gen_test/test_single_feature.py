@@ -58,7 +58,7 @@ talib_pat_param_dict :  Dict[str, List[Dict[str, float]]] = {feature_name : [{}]
 #feature_gen : feature_gen_mod.FeatureGenerator = feature_gen_mod.TalibVolatility(parameters_dict = talib_vol_param_dict)
 feature_gen : feature_gen_mod.FeatureGenerator = feature_gen_mod.TalibPattern(parameters_dict = talib_pat_param_dict)
 feature_wrapper : feature_gen_mod.FeatureDataFrame = feature_gen.create_features_for_data_bar(bar_wrapper = bar_data_wrapper)
-feature_df : pd.DataFrame = feature_wrapper.get_feature_df_ref()
+feature_df : pd.DataFrame = feature_wrapper.get_feature_df()
 
 # ---- print parameters -----
 for feat_name, argument_dict_lst in feature_wrapper.parameter_dict.items():

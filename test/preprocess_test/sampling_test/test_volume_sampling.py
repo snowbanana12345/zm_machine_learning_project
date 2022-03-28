@@ -127,18 +127,6 @@ class VolumeSamplingTest(unittest.TestCase):
                                                    deep_copy=False)
         # ------ sampling ------
         result_bar_wrapper = sampler.volume_sampling(self.tick_wrapper, sampling_volume = 10)
-        try :
-            self.assertEqual(expected_bar_wrapper, result_bar_wrapper)
-        except AssertionError:
-            expected_df = expected_bar_wrapper.get_bar_data_reference()
-            result_df = result_bar_wrapper.get_bar_data_reference()
-            expected_df.columns = [header + "_expected" for header in expected_df.columns]
-            result_df.columns = [header + "_result" for header in result_df.columns]
-            combine_dict = {}
-            for expected_name, result_name, in zip(expected_df.columns, result_df.columns):
-                combine_dict[result_name] = result_df[result_name]
-                combine_dict[expected_name] = expected_df[expected_name]
-            combined_df = pd.DataFrame(combine_dict)
-            print(combined_df)
 
+        self.assertTrue(all(expected_bar_wrapper.get_bar_data_reference() == result_bar_wrapper.get_bar_data_reference()))
 

@@ -7,8 +7,6 @@ import pandas as pd
 import random
 
 
-
-
 class BootStrapMatrix:
     def __init__(self, boot_strap_arr : np.array):
         """

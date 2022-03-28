@@ -65,86 +65,44 @@ class TestBarrier111AbsChangeLabel(unittest.TestCase):
         label_result_open: label_gen_mod.LabelDataFrame = self.label_gen_open.create_labels_for_data_bar(self.bar_wrapper)
         answer_open_label_series = pd.Series([1, 1, 0, 1, 1, -1, -1, 1, 1, -1, 1, 0])
         answer_open_look_ahead_series = pd.Series([2, 1, 4, 3, 2, 2, 1, 1, 1, 1, 1, 0])
-        try:
-            self.assertTrue(label_result_open.get_label_series_ref().equals(answer_open_label_series))
-            self.assertTrue(label_result_open.get_look_ahead_series_ref().equals(answer_open_look_ahead_series))
-        except AssertionError:
-            print("Test case 1 failed")
-            result_label_series = label_result_open.get_label_series_ref()
-            result_look_ahead_series = label_result_open.get_look_ahead_series_ref()
-            print(pd.DataFrame({"result" : result_label_series, "expected" : answer_open_label_series}))
-            print(pd.DataFrame({"result" : result_look_ahead_series, "expected" : answer_open_look_ahead_series}))
+        self.assertTrue(all(label_result_open.get_label_series_ref() == answer_open_label_series))
+        self.assertTrue(all(label_result_open.get_look_ahead_series_ref() == answer_open_look_ahead_series))
 
     def test_case_2(self):
         label_result_close: label_gen_mod.LabelDataFrame = self.label_gen_close.create_labels_for_data_bar(self.bar_wrapper)
         answer_close_label_series = pd.Series([0, 0, 0, -1, -1, -1, 1, 1, -1, 1, 0, 0])
         answer_close_look_ahead_series = pd.Series([4, 4, 4, 4, 3, 1, 2, 1, 1, 1, 1, 0])
-        try:
-            self.assertTrue(label_result_close.get_label_series_ref().equals(answer_close_label_series))
-            self.assertTrue(label_result_close.get_look_ahead_series_ref().equals(answer_close_look_ahead_series))
-        except AssertionError:
-            print("Test case 2 failed")
-            result_label_series = label_result_close.get_label_series_ref()
-            result_look_ahead_series = label_result_close.get_look_ahead_series_ref()
-            print(pd.DataFrame({"result" : result_label_series, "expected" : answer_close_label_series}))
-            print(pd.DataFrame({"result" : result_look_ahead_series, "expected" : answer_close_look_ahead_series}))
+        self.assertTrue(all(label_result_close.get_label_series_ref() == answer_close_label_series))
+        self.assertTrue(all(label_result_close.get_look_ahead_series_ref() == answer_close_look_ahead_series))
 
     def test_case_3(self):
         label_result_high: label_gen_mod.LabelDataFrame = self.label_gen_high.create_labels_for_data_bar(self.bar_wrapper)
         answer_high_label_series = pd.Series([-1, 1, 1, 1, 1, 1, -1, 1, 1, 1, 1, 0])
         answer_high_look_ahead_series = pd.Series([4, 4, 3, 2, 1, 1, 1, 2, 1, 1, 1, 0])
-        try:
-            self.assertTrue(label_result_high.get_label_series_ref().equals(answer_high_label_series))
-            self.assertTrue(label_result_high.get_look_ahead_series_ref().equals(answer_high_look_ahead_series))
-        except AssertionError:
-            print("Test case 3 failed")
-            result_label_series = label_result_high.get_label_series_ref()
-            result_look_ahead_series = label_result_high.get_look_ahead_series_ref()
-            print(pd.DataFrame({"result" : result_label_series, "expected" : answer_high_label_series}))
-            print(pd.DataFrame({"result" : result_look_ahead_series, "expected" : answer_high_look_ahead_series}))
+        self.assertTrue(all(label_result_high.get_label_series_ref() == answer_high_label_series))
+        self.assertTrue(all(label_result_high.get_look_ahead_series_ref() == answer_high_look_ahead_series))
 
     def test_case_4(self):
         label_result_low: label_gen_mod.LabelDataFrame = self.label_gen_low.create_labels_for_data_bar(self.bar_wrapper)
         answer_low_label_series = pd.Series([-1, -1, -1, -1, -1, 1, 0, 0, 0, 0, 0, 0])
         answer_low_look_ahead_series = pd.Series([4, 4, 3, 2, 1, 4, 4, 4, 3, 2, 1, 0])
-        try:
-            self.assertTrue(label_result_low.get_label_series_ref().equals(answer_low_label_series))
-            self.assertTrue(label_result_low.get_look_ahead_series_ref().equals(answer_low_look_ahead_series))
-        except AssertionError:
-            print("Test case 4 failed")
-            result_label_series = label_result_low.get_label_series_ref()
-            result_look_ahead_series = label_result_low.get_look_ahead_series_ref()
-            print(pd.DataFrame({"result" : result_label_series, "expected" : answer_low_label_series}))
-            print(pd.DataFrame({"result" : result_look_ahead_series, "expected" : answer_low_look_ahead_series}))
+        self.assertTrue(all(label_result_low.get_label_series_ref() == answer_low_label_series))
+        self.assertTrue(all(label_result_low.get_look_ahead_series_ref() == answer_low_look_ahead_series))
 
 
     def test_case_5(self):
         label_result_vwap: label_gen_mod.LabelDataFrame = self.label_gen_vwap.create_labels_for_data_bar(self.bar_wrapper)
         answer_vwap_label_series = pd.Series([1, -1, -1, -1, -1, 1, 1, 1, -1, -1, -1, 0])
         answer_vwap_look_ahead_series = pd.Series([3, 3, 2, 1, 2, 3, 1, 1, 1, 2, 1, 0])
-        try:
-            self.assertTrue(label_result_vwap.get_label_series_ref().equals(answer_vwap_label_series))
-            self.assertTrue(label_result_vwap.get_look_ahead_series_ref().equals(answer_vwap_look_ahead_series))
-        except AssertionError:
-            print("Test case 5 failed")
-            result_label_series = label_result_vwap.get_label_series_ref()
-            result_look_ahead_series = label_result_vwap.get_look_ahead_series_ref()
-            print(pd.DataFrame({"result" : result_label_series, "expected" : answer_vwap_label_series}))
-            print(pd.DataFrame({"result" : result_look_ahead_series, "expected" : answer_vwap_look_ahead_series}))
+        self.assertTrue(all(label_result_vwap.get_label_series_ref() == answer_vwap_label_series))
+        self.assertTrue(all(label_result_vwap.get_look_ahead_series_ref() == answer_vwap_look_ahead_series))
 
     def test_case_6(self):
         label_result_vwap2: label_gen_mod.LabelDataFrame = self.label_gen_vwap2.create_labels_for_data_bar(self.bar_wrapper)
         answer_vwap2_label_series = pd.Series([0, 0, 0, -1, -1, 0, 1, 1, -1, 0, -1, 0])
         answer_vwap2_look_ahead_series = pd.Series([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0])
-        try:
-            self.assertTrue(label_result_vwap2.get_label_series_ref().equals(answer_vwap2_label_series))
-            self.assertTrue(label_result_vwap2.get_look_ahead_series_ref().equals(answer_vwap2_look_ahead_series))
-        except AssertionError:
-            print("Test case 5 failed")
-            result_label_series = label_result_vwap2.get_label_series_ref()
-            result_look_ahead_series = label_result_vwap2.get_look_ahead_series_ref()
-            print(pd.DataFrame({"result" : result_label_series, "expected" : answer_vwap2_label_series}))
-            print(pd.DataFrame({"result" : result_look_ahead_series, "expected" : answer_vwap2_look_ahead_series}))
+        self.assertTrue(all(label_result_vwap2.get_label_series_ref() == answer_vwap2_label_series))
+        self.assertTrue(all(label_result_vwap2.get_look_ahead_series_ref() == answer_vwap2_look_ahead_series))
 
 if __name__ == '__main__':
     unittest.main()
