@@ -57,7 +57,7 @@ class FeatureDataFrameTest(unittest.TestCase):
             dat_blocks.BarDataColumns.VOLUME.value: [6,7,5,3,4],
             dat_blocks.BarDataColumns.VWAP.value: [5,8,7,2,3],
         })
-        
+
         self.test_parameters_dict_1 = {
             "Tom" : [{"clicks" : 1, "mice" : 3}],
             "Jerry" : [{"milk" : 3, "cookies" : 5}]

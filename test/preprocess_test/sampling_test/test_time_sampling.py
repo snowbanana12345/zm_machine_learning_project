@@ -1,7 +1,7 @@
 import src.data_processing_module.sampling as sampler
 import pandas as pd
-from src.data_base_module.data_blocks import TickDataColumns, TickDataFrame, Date, IntraDayPeriod, TimeBarDataFrame, \
-    BarDataColumns
+from src.data_base_module.data_blocks import TickDataColumns, TickDataFrame, Date, IntraDayPeriod, BarDataFrame, \
+    BarDataColumns, BarInfo, Sampling, TickInfo
 import numpy as np
 import unittest
 
@@ -86,8 +86,8 @@ class TimeSamplingTest(unittest.TestCase):
         # ------ create gibberish column to test redundant column removal of TickDataFrame Wrapper class -----
         self.raw_tick_df["alalabaarababababa_bubrabubra"] = 0
         # ------ create tick data frame wrapper object -------
-        self.tick_wrapper = TickDataFrame(tick_df=self.raw_tick_df, date=self.test_date, intra_day_period=IntraDayPeriod.WHOLE_DAY,
-                                        symbol="TEST")
+        tick_info = TickInfo(date = self.test_date, symbol = "TEST", intra_day_period = IntraDayPeriod.WHOLE_DAY)
+        self.tick_wrapper = TickDataFrame(tick_df=self.raw_tick_df, tick_info = tick_info)
 
     def test_case(self):
         # --------- expected answer --------
@@ -117,12 +117,13 @@ class TimeSamplingTest(unittest.TestCase):
 
         expected_bar_df = pd.DataFrame([bar1, bar2, bar3, bar4, bar5, bar6, bar7])
         expected_bar_df["hachoooo_hachoooo"] = 1
-        expected_bar_wrapper = TimeBarDataFrame(bar_df=expected_bar_df, sampling_seconds=15, date=self.test_date,
-                                         intra_day_period=IntraDayPeriod.WHOLE_DAY, symbol="TEST", deep_copy=False)
+        expected_bar_info = BarInfo(symbol = "TEST", date = self.test_date, intra_day_period = IntraDayPeriod.WHOLE_DAY,
+                                    sampling_level = 15, sampling_type = Sampling.TIME)
+        expected_bar_wrapper = BarDataFrame(bar_data = expected_bar_df, bar_info = expected_bar_info)
 
         # ------ sampling -----
-        result_bar_wrapper = sampler.time_sampling(tick_df_wrapper=self.tick_wrapper, sampling_seconds=15)
+        result_bar_wrapper = sampler.time_sampling(tick_wrapper=self.tick_wrapper, sampling_seconds=15)
 
-        self.assertTrue(all(expected_bar_wrapper.get_bar_data_reference() == result_bar_wrapper.get_bar_data_reference()))
+        self.assertTrue(all(expected_bar_wrapper.bar_data == result_bar_wrapper.bar_data))
 
 

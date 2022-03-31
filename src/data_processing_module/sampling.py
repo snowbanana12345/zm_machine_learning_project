@@ -7,16 +7,13 @@ import src.data_processing_module.data_processing_logger as dp_logger
 
 # --------------------- sampling functions ---------------------------
 """ Currently supported sampling are time, tick, volume dollar """
-
-
 def get_nano_time_to_date_time_func(timezone_shift_hour: int) -> callable:
     def nano_time_to_date_time(timestamp: int) -> pd.Timestamp:
         return pd.Timestamp(timestamp) + pd.to_timedelta(timezone_shift_hour, unit="h")
-
     return nano_time_to_date_time
 
 
-def time_sampling(tick_df_wrapper: data.TickDataFrame, sampling_seconds: int = 60) -> data.TimeBarDataFrame:
+def time_sampling(tick_wrapper: data.TickDataFrame, sampling_seconds: int = 60) -> data.BarDataFrame:
     """
     Makes use of the resampling function of pandas data frames to resample tick data into data frames
     Only samples ticks with trades occuring.
@@ -26,12 +23,9 @@ def time_sampling(tick_df_wrapper: data.TickDataFrame, sampling_seconds: int = 6
     NOTE : time sampling can cause missing bars, these bars will have all their values set to 0.
     """
     # ------ get underlying reference from the tick data frame wrapper ------
-    tick_df: pd.DataFrame = tick_df_wrapper.get_tick_data()
+    tick_df: pd.DataFrame = tick_wrapper.tick_data
     # ------ log start of sampling process -------
-    dp_logger.log_time_sampling_start(ticker_symbol=tick_df_wrapper.symbol,
-                                      date=tick_df_wrapper.date,
-                                      sampling_seconds=sampling_seconds,
-                                      intra_day_period=tick_df_wrapper.intra_day_period)
+    dp_logger.log_time_sampling_start(tick_info = tick_wrapper.tick_info,sampling_seconds=sampling_seconds)
     # ------ set the index to be date time --------
     tick_df.index = tick_df[data.TickDataColumns.TIMESTAMP_NANO.value].apply(lambda ts: pd.Timestamp(ts))
     # ------ extract the relevant tick information ---------
@@ -64,15 +58,13 @@ def time_sampling(tick_df_wrapper: data.TickDataFrame, sampling_seconds: int = 6
     # ----- reset the index of the input tick_df to range indexing ------
     tick_df.index = pd.RangeIndex(len(tick_df))
     # ----- log end of sampling ------
-    dp_logger.log_time_sampling_end(ticker_symbol=tick_df_wrapper.symbol,
-                                    date=tick_df_wrapper.date,
-                                    sampling_seconds=sampling_seconds,
-                                    intra_day_period=tick_df_wrapper.intra_day_period)
-    return data.TimeBarDataFrame(bar_df = new_df, symbol = tick_df_wrapper.symbol, sampling_seconds = sampling_seconds,
-                                 date = tick_df_wrapper.date, intra_day_period = tick_df_wrapper.intra_day_period)
+    dp_logger.log_time_sampling_end(tick_info = tick_wrapper.tick_info, sampling_seconds=sampling_seconds)
+    bar_info = data.BarInfo(symbol = tick_wrapper.tick_info.symbol, date = tick_wrapper.tick_info.date, intra_day_period = tick_wrapper.tick_info.intra_day_period
+                            , sampling_level = sampling_seconds, sampling_type = data.Sampling.TIME)
+    return data.BarDataFrame(bar_data = new_df, bar_info = bar_info)
 
 
-def volume_sampling(tick_df_wrapper: data.TickDataFrame, sampling_volume: int = 50) -> data.VolumeBarDataFrame:
+def volume_sampling(tick_wrapper: data.TickDataFrame, sampling_volume: int = 50) -> data.BarDataFrame:
     """
     combines tick data into volume bars of size specified by bar_size
     Only samples ticks with trades occuring.
@@ -81,12 +73,9 @@ def volume_sampling(tick_df_wrapper: data.TickDataFrame, sampling_volume: int = 
     NOTE : the last bit of data that does not form a bar is dropped
     """
     # ------ get underlying reference from the tick data frame wrapper ------
-    tick_df: pd.DataFrame = tick_df_wrapper.get_tick_data()
+    tick_df : pd.DataFrame = tick_wrapper.tick_data
     # ------ log start of sampling process -------
-    dp_logger.log_volume_sampling_start(ticker_symbol=tick_df_wrapper.symbol,
-                                        sampling_volume=sampling_volume,
-                                        date=tick_df_wrapper.date,
-                                        intra_day_period=tick_df_wrapper.intra_day_period)
+    dp_logger.log_volume_sampling_start(tick_info = tick_wrapper.tick_info, sampling_volume=sampling_volume)
     # ------ initialize --------
     df = tick_df[tick_df[data.TickDataColumns.LAST_PRICE.value] > 0]
     open_price_series = []
@@ -135,8 +124,6 @@ def volume_sampling(tick_df_wrapper: data.TickDataFrame, sampling_volume: int = 
             curr_volumes.append(sampling_volume - volume_counter + tick_row[data.TickDataColumns.LAST_QUANTITY.value])
         else:
             curr_volumes.append(tick_row[data.TickDataColumns.LAST_QUANTITY.value])
-
-
     # ------ returns a VolumeBarDataFrame object --------
     new_bar_df = pd.DataFrame({
         data.BarDataColumns.OPEN.value: open_price_series,
@@ -147,16 +134,14 @@ def volume_sampling(tick_df_wrapper: data.TickDataFrame, sampling_volume: int = 
         data.BarDataColumns.TIMESTAMP.value: timestamp_series,
         data.BarDataColumns.VOLUME.value : sampling_volume
     })
-    volume_bar_wrapper =  data.VolumeBarDataFrame(bar_df = new_bar_df , symbol = tick_df_wrapper.symbol, sampling_volume = sampling_volume,
-                                   date = tick_df_wrapper.date, intra_day_period = tick_df_wrapper.intra_day_period)
+    bar_info = data.BarInfo(symbol = tick_wrapper.tick_info.symbol, sampling_level = sampling_volume, date = tick_wrapper.tick_info.date,
+                            intra_day_period = tick_wrapper.tick_info.intra_day_period, sampling_type = data.Sampling.VOlUME)
+    volume_bar_wrapper =  data.BarDataFrame(bar_data = new_bar_df, bar_info = bar_info)
     # ----- log end of sampling ------
-    dp_logger.log_volume_sampling_end(ticker_symbol=tick_df_wrapper.symbol,
-                                      sampling_volume=sampling_volume,
-                                      date=tick_df_wrapper.date,
-                                      intra_day_period=tick_df_wrapper.intra_day_period)
+    dp_logger.log_volume_sampling_end(tick_info = tick_wrapper.tick_info, sampling_volume=sampling_volume)
     return volume_bar_wrapper
 
-def tick_sampling(tick_df_wrapper: data.TickDataFrame, sampling_ticks: int = 20) -> data.TickBarDataFrame:
+def tick_sampling(tick_wrapper: data.TickDataFrame, sampling_ticks: int = 20) -> data.BarDataFrame:
     """ Combines tick data into bunches of bar_size number of ticks, 
         only ticks with non zero trade volume is counted
     :param tick_df : data frame containing tick data
@@ -164,12 +149,9 @@ def tick_sampling(tick_df_wrapper: data.TickDataFrame, sampling_ticks: int = 20)
     NOTE : left over ticks are combined into the last bar
     NOTE : the timestamp is the time stamp of the first tick in the bar """
     # ------ get underlying reference from the tick data frame wrapper ------
-    tick_df = tick_df_wrapper.get_tick_data()
+    tick_df = tick_wrapper.tick_data
     # ------ log start of sampling process -------
-    dp_logger.log_tick_sampling_start(ticker_symbol=tick_df_wrapper.symbol,
-                                      sampling_ticks=sampling_ticks,
-                                      date=tick_df_wrapper.date,
-                                      intra_day_period=tick_df_wrapper.intra_day_period)
+    dp_logger.log_tick_sampling_start(tick_info = tick_wrapper.tick_info, sampling_ticks=sampling_ticks)
     # --------- get relevant columns --------
     price_col: pd.Series = tick_df[data.TickDataColumns.LAST_PRICE.value]
     qty_col: pd.Series = tick_df[data.TickDataColumns.LAST_QUANTITY.value]
@@ -217,28 +199,22 @@ def tick_sampling(tick_df_wrapper: data.TickDataFrame, sampling_ticks: int = 20)
         data.BarDataColumns.TIMESTAMP.value: timestamp_series
     })
     # ----- create TickBarDataFrame object -----
-    tick_bar_df_wrapper = data.TickBarDataFrame(bar_df = new_bar_df, symbol = tick_df_wrapper.symbol, date = tick_df_wrapper.date,
-                                                sampling_ticks = sampling_ticks, intra_day_period = tick_df_wrapper.intra_day_period)
+    bar_info = data.BarInfo(symbol = tick_wrapper.tick_info.symbol, date = tick_wrapper.tick_info.date, sampling_level = sampling_ticks,
+                            intra_day_period = tick_wrapper.tick_info.intra_day_period, sampling_type = data.Sampling.TICK)
+    bar_wrapper = data.BarDataFrame(bar_data = new_bar_df, bar_info = bar_info)
     # ----- log end of sampling ------
-    dp_logger.log_tick_sampling_end(ticker_symbol=tick_df_wrapper.symbol,
-                                    sampling_ticks=sampling_ticks,
-                                    date=tick_df_wrapper.date,
-                                    intra_day_period=tick_df_wrapper.intra_day_period)
-    return tick_bar_df_wrapper
+    dp_logger.log_tick_sampling_end(tick_info = tick_wrapper.tick_info, sampling_ticks=sampling_ticks)
+    return bar_wrapper
 
-
-def dollar_sampling(tick_df_wrapper: data.TickDataFrame, sampling_dollar: int = 1000000) -> data.DollarBarDataFrame:
+def dollar_sampling(tick_wrapper: data.TickDataFrame, sampling_dollar: int = 1000000) -> data.BarDataFrame:
     """
     combines tick data into dollar bars of size specified by bar_size
     NOTE : the last bit of data that does not form a bar is dropped
     """
     # ------ get underlying reference from the tick data frame wrapper ------
-    tick_df = tick_df_wrapper.get_tick_data()
+    tick_df = tick_wrapper.tick_data
     # ------ log start of sampling process -------
-    dp_logger.log_dollar_sampling_start(ticker_symbol=tick_df_wrapper.symbol,
-                                        sampling_dollar=sampling_dollar,
-                                        date=tick_df_wrapper.date,
-                                        intra_day_period=tick_df_wrapper.intra_day_period)
+    dp_logger.log_dollar_sampling_start(tick_info = tick_wrapper.tick_info, sampling_dollar=sampling_dollar)
     # ------ dollar sampling ------
     df = tick_df[tick_df[data.TickDataColumns.LAST_PRICE.value] > 0]
     open_price_series_lst : [float] = []
@@ -302,7 +278,6 @@ def dollar_sampling(tick_df_wrapper: data.TickDataFrame, sampling_dollar: int = 
         if dollar_counter < sampling_dollar:
             prev_dollar_counter = dollar_counter
 
-
     # ----- convert to a bar data frame object ------
     vwap_series = pd.Series([sampling_dollar for _ in range(len(volume_traded_series))]).div(volume_traded_series)
     result_bar_df = pd.DataFrame({
@@ -314,17 +289,12 @@ def dollar_sampling(tick_df_wrapper: data.TickDataFrame, sampling_dollar: int = 
         data.BarDataColumns.TIMESTAMP.value: timestamp_series,
         data.BarDataColumns.VWAP.value : vwap_series
     })
-    dollar_bar_df_wrapper = data.DollarBarDataFrame(bar_df = result_bar_df, symbol = tick_df_wrapper.symbol,
-                                   sampling_dollar = sampling_dollar,
-                                   date = tick_df_wrapper.date,
-                                   intra_day_period = tick_df_wrapper.intra_day_period)
+    bar_info = data.BarInfo(symbol = tick_wrapper.tick_info.symbol, sampling_level = sampling_dollar, date = tick_wrapper.tick_info.date,
+                            intra_day_period = tick_wrapper.tick_info.intra_day_period, sampling_type = data.Sampling.DOLLAR)
+    dollar_bar_df_wrapper = data.BarDataFrame(bar_data = result_bar_df, bar_info = bar_info)
     # ----- log end of sampling ------
-    dp_logger.log_dollar_sampling_end(ticker_symbol=tick_df_wrapper.symbol,
-                                      sampling_dollar=sampling_dollar,
-                                      date=tick_df_wrapper.date,
-                                      intra_day_period=tick_df_wrapper.intra_day_period)
+    dp_logger.log_dollar_sampling_end(tick_info = tick_wrapper.tick_info, sampling_dollar=sampling_dollar)
     return dollar_bar_df_wrapper
-
 
 # -------- bar sampling with statistics on limit order books ----------
 def volume_sampling_limit_book(tick_df, bar_size, last_price_col="lastPrice", last_qty_col="lastQty",

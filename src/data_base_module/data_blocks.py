@@ -1,6 +1,7 @@
 from enum import Enum
 import pandas as pd
 from dataclasses import dataclass
+from typing import ClassVar, Dict
 
 
 # ------- date class --------
@@ -57,10 +58,10 @@ class Date:
 
 # ------- Enums -------
 class Sampling(Enum):
-    TIME = "time_sampled"
-    TICK = "tick_sampled"
-    VOLUME = "volume_sampled"
-    DOLLAR = "dollar_sampled"
+    TIME = "Time sampled"
+    TICK = "Tick sampled"
+    VOLUME = "Volume sampled"
+    DOLLAR = "Dollar sampled"
 
 
 class BarDataColumns(Enum):
@@ -111,44 +112,34 @@ class TickDataColumns(Enum):
 -> ensure that the wrapped data frame contains certain columns 
 -> contain meta data about the bar data , sampling level, date, ticker symbol etc. """
 
+@dataclass
+class BarInfo:
+    symbol : str
+    date : Date
+    intra_day_period : IntraDayPeriod
+    sampling_type : Sampling
+    sampling_level : int
+
+    def __str__(self):
+        return f"{self.sampling_type.value} -- {self.symbol} -- {self.date.get_str_format_2()} -- {self.intra_day_period.value} -- sampling seconds : {self.sampling_level}"
 
 class BarDataFrame:
-    REQUIRED_COLUMNS = [BarDataColumns.OPEN,
-                        BarDataColumns.CLOSE,
-                        BarDataColumns.HIGH,
-                        BarDataColumns.LOW,
-                        BarDataColumns.TIMESTAMP,
-                        BarDataColumns.VOLUME,
-                        BarDataColumns.VWAP]
     """ Abstract class """
-    def __init__(self, symbol: str):
-        self.bar_data : pd.DataFrame = pd.DataFrame()
-        self.symbol : str = symbol
-        self.print_str : str =  "Bar OCHLV -- " + self.symbol
+    def __init__(self, bar_data : pd.DataFrame, bar_info : BarInfo):
+        self.validate_bar_columns(bar_data)
+        self.bar_data : pd.DataFrame = bar_data.loc[:, [col.value for col in BarDataColumns]]
+        self.bar_info = bar_info
 
     def get_column(self, col_name : BarDataColumns) -> pd.Series:
         return self.bar_data[col_name.value]
 
-    def create_empty_bar_df(self) -> pd.DataFrame:
-        return pd.DataFrame(columns = [col.value for col in BarDataFrame.REQUIRED_COLUMNS])
-
-    def create_empty_copy(self):
-        """ creates an empty data frame with a copy of the meta data this class holds """
-        return BarDataFrame(self.symbol)
-
-    def set_data_frame(self, bar_df : pd.DataFrame, deep_copy : bool = False) -> None:
-        self.bar_data = bar_df
-
-    def get_bar_data_reference(self) -> pd.DataFrame:
-        return self.bar_data
-
-    def get_bar_data_copy(self) -> pd.DataFrame:
-        """ returns a copy of the bar data frame that the class is wrapping
-        copying instead of referencing is done to avoid setting with copy errors """
-        return self.bar_data.copy(deep=True)
+    def validate_bar_columns(self, bar_data : pd.DataFrame):
+        for required_column in BarDataColumns:
+            if required_column.value not in bar_data.columns:
+                raise BarRequiredColumnNotFound(required_column)
 
     def __str__(self) -> str:
-        return f"Bar OCHLV -- {self.symbol}"
+        return str(self.bar_info)
 
     def __len__(self) -> int:
         return len(self.bar_data)
@@ -156,253 +147,19 @@ class BarDataFrame:
     def __eq__(self, other) -> bool:
         if not isinstance(other, BarDataFrame):
             return False
-        return self.bar_data.equals(other.bar_data) and (self.symbol == other.symbol)
+        return self.bar_data.equals(other.bar_data) and (self.bar_info == other.bar_info)
 
-
-class TimeBarDataFrame(BarDataFrame):
-    """
-    Wrapper for a pandas data frame that contains specifically time sampled intraday bar data
-    Also contains meta data : sampling_seconds, intra_day_period, date
-    """
-    def __init__(self, bar_df: pd.DataFrame,
-                 sampling_seconds: int,
-                 date: Date,
-                 intra_day_period: IntraDayPeriod,
-                 symbol: str,
-                 deep_copy=False):
-        """
-        creates a copy of the original bar data frame to avoid setting with copy errors
-        :param bar_df: The bar data frame retrieved or sampled
-        :param sampling_seconds: the level of sampling that was used
-        :param date : the date, what else do you want?
-        :param intra_day_period : morning afternoon or midnight or perhaps the whole day
-        :param deep_copy: if set to true, the wrapped data frame will be a copy of the data frame used to initialize the object
-        else, it will be a reference.
-        Warning: This class will convert the input the dataframe to ranged indexing which may cause issues if object holds a reference instead of a copy
-        """
-        # ----- meta data -------
-        super().__init__(symbol)
-        self.sampling_seconds: int = sampling_seconds
-        self.date: Date = date
-        self.intra_day_period: IntraDayPeriod = intra_day_period
-        self.set_data_frame(bar_df = bar_df, deep_copy = deep_copy)
-
-    def set_data_frame(self, bar_df : pd.DataFrame, deep_copy: bool = False) -> None:
-        # ----- check if the necessary data columns are found in the data frame ------
-        for required_column in BarDataFrame.REQUIRED_COLUMNS:
-            if required_column.value not in bar_df.columns:
-                raise SamplingRequiredColumnNotFound(required_column, Sampling.TIME)
-        # ----- do deep copying if specified to be true ------
-        # ----- makes sure only required columns are stored in the data frame -------
-        if deep_copy:
-            self.bar_data = bar_df.loc[:, [column.value for column in BarDataFrame.REQUIRED_COLUMNS]].copy(deep=deep_copy)
-        else:
-            self.bar_data = bar_df.loc[:, [column.value for column in BarDataFrame.REQUIRED_COLUMNS]]
-        # ----- enforce ranged indexing for data frame ------
-        self.bar_data.index = pd.RangeIndex(len(self.bar_data))
-
-    def create_empty_copy(self):
-        return TimeBarDataFrame(bar_df = self.create_empty_bar_df(), symbol = self.symbol, sampling_seconds = self.sampling_seconds,
-                                date = self.date, intra_day_period = self.intra_day_period)
+# -------- Tick data frame -------
+@dataclass
+class TickInfo:
+    symbol : str
+    date : Date
+    intra_day_period : IntraDayPeriod
 
     def __str__(self):
-        return f"Time sampled bar -- {self.symbol} -- {self.date.get_str_format_2()} -- {self.intra_day_period.value} -- sampling seconds : {self.sampling_seconds}"
-
-    def __eq__(self, other):
-        """ NOTE : this equality condition fails when comparing floats with int even if the values are the same """
-        if not isinstance(other, TimeBarDataFrame):
-            return False
-        data_frame_eq = self.bar_data.equals(other.bar_data)
-        date_eq = self.date == other.date
-        symbol_eq = self.symbol == other.symbol
-        sampling_eq = self.sampling_seconds == other.sampling_seconds
-        intraday_eq = self.intra_day_period == other.intra_day_period
-        return data_frame_eq and date_eq and symbol_eq and intraday_eq and sampling_eq
-
-class TickBarDataFrame(BarDataFrame):
-    """
-    Wrapper for a pandas data frame that contains specifically intraday tick sampled bar data
-    Also contains meta data : sampling_ticks, intra_day_period, date
-    """
-
-    def __init__(self, bar_df: pd.DataFrame,
-                 sampling_ticks: int,
-                 date: Date,
-                 intra_day_period: IntraDayPeriod,
-                 symbol: str,
-                 deep_copy=False):
-        """
-        creates a copy of the original bar data frame to avoid setting with copy errors
-        :param bar_df: The bar data frame retrieved or sampled
-        :param sampling_ticks: the level of sampling that was used
-        :param date : the date, what else do you want?
-        :param intra_day_period : morning afternoon or midnight or perhaps the whole day
-        :param deep_copy: if set to true, the wrapped data frame will be a copy of the data frame used to initialize the object
-        else, it will be a reference.
-        Warning: This class will convert the input the dataframe to ranged indexing which may cause issues if object holds a reference instead of a copy
-        """
-        # ----- meta data -------
-        super().__init__(symbol)
-        self.sampling_ticks: int = sampling_ticks
-        self.date: Date = date
-        self.intra_day_period: IntraDayPeriod = intra_day_period
-        self.set_data_frame(bar_df = bar_df, deep_copy = deep_copy)
-
-    def set_data_frame(self, bar_df : pd.DataFrame, deep_copy : bool  = False):
-        # ----- check if the necessary data columns are found in the data frame ------
-        for required_column in BarDataFrame.REQUIRED_COLUMNS:
-            if required_column.value not in bar_df.columns:
-                raise SamplingRequiredColumnNotFound(required_column, Sampling.TICK)
-        # ----- do deep copying if specified to be true ------
-        # ----- makes sure only required columns are stored in the data frame -------
-        if deep_copy:
-            self.bar_data = bar_df.loc[:, [column.value for column in BarDataFrame.REQUIRED_COLUMNS]].copy(deep=deep_copy)
-        else:
-            self.bar_data = bar_df.loc[:, [column.value for column in BarDataFrame.REQUIRED_COLUMNS]]
-        # ----- enforce ranged indexing for data frame ------
-        self.bar_data.index = pd.RangeIndex(len(self.bar_data))
-
-    def create_empty_copy(self):
-        return TickBarDataFrame(bar_df = self.create_empty_bar_df(), symbol = self.symbol, sampling_ticks = self.sampling_ticks,
-                                date = self.date, intra_day_period = self.intra_day_period)
-
-    def __str__(self):
-        return f"Tick sampled bar -- {self.symbol} --  {self.date.get_str_format_2()}  -- {self.intra_day_period.value}  -- sampling ticks : {self.sampling_ticks}"
-
-    def __eq__(self, other):
-        """ NOTE : this equality condition fails when comparing floats with int even if the values are the same """
-        if not isinstance(other, TickBarDataFrame):
-            return False
-        data_frame_eq = self.bar_data.equals(other.bar_data)
-        date_eq = self.date == other.date
-        symbol_eq = self.symbol == other.symbol
-        sampling_eq = self.sampling_ticks == other.sampling_ticks
-        intraday_eq = self.intra_day_period == other.intra_day_period
-        return data_frame_eq and date_eq and symbol_eq and intraday_eq and sampling_eq
-
-class VolumeBarDataFrame(BarDataFrame):
-    """
-    Wrapper for a pandas data frame that contains specifically intraday volume sampled bar data
-    Also contains meta data : sampling_volume, intra_day_period, date
-    """
-    def __init__(self, bar_df: pd.DataFrame,
-                 sampling_volume: int,
-                 date: Date,
-                 intra_day_period: IntraDayPeriod,
-                 symbol: str,
-                 deep_copy=False):
-        """
-        creates a copy of the original bar data frame to avoid setting with copy errors
-        :param bar_df: The bar data frame retrieved or sampled
-        :param sampling_volume: the level of sampling that was used
-        :param date : the date, what else do you want?
-        :param intra_day_period : morning afternoon or midnight or perhaps the whole day
-        :param deep_copy: if set to true, the wrapped data frame will be a copy of the data frame used to initialize the object
-        else, it will be a reference.
-        Warning: This class will convert the input the dataframe to ranged indexing which may cause issues if object holds a reference instead of a copy
-        """
-        # ----- meta data -------
-        super().__init__(symbol)
-        self.sampling_volume: int = sampling_volume
-        self.date: Date = date
-        self.intra_day_period: IntraDayPeriod = intra_day_period
-        self.set_data_frame(bar_df = bar_df, deep_copy = deep_copy)
-
-    def set_data_frame(self, bar_df : pd.DataFrame, deep_copy : bool = False) -> None:
-        # ----- check if the necessary data columns are found in the data frame ------
-        for required_column in VolumeBarDataFrame.REQUIRED_COLUMNS:
-            if required_column.value not in bar_df.columns:
-                raise SamplingRequiredColumnNotFound(required_column, Sampling.VOLUME)
-        # ----- do deep copying if specified to be true ------
-        # ----- makes sure only required columns are stored in the data frame -------
-        if deep_copy:
-            self.bar_data = bar_df.loc[:, [column.value for column in VolumeBarDataFrame.REQUIRED_COLUMNS]].copy(deep=deep_copy)
-        else:
-            self.bar_data = bar_df.loc[:, [column.value for column in VolumeBarDataFrame.REQUIRED_COLUMNS]]
-        # ----- enforce ranged indexing for data frame ------
-        self.bar_data.index = pd.RangeIndex(len(self.bar_data))
-
-    def create_empty_copy(self):
-        return VolumeBarDataFrame(bar_df = self.create_empty_bar_df(), symbol = self.symbol, sampling_volume = self.sampling_volume,
-                                date = self.date, intra_day_period = self.intra_day_period)
-
-    def __str__(self):
-        return f"Volume sampled bar -- {self.symbol} -- {self.date.get_str_format_2()} -- {self.intra_day_period.value} -- sampling volume : {self.sampling_volume}"
-
-    def __eq__(self, other):
-        """ NOTE : this equality condition fails when comparing floats with int even if the values are the same """
-        if not isinstance(other, VolumeBarDataFrame):
-            return False
-        data_frame_eq = self.bar_data.equals(other.bar_data)
-        date_eq = self.date == other.date
-        symbol_eq = self.symbol == other.symbol
-        sampling_eq = self.sampling_volume == other.sampling_volume
-        intraday_eq = self.intra_day_period == other.intra_day_period
-        return data_frame_eq and date_eq and symbol_eq and intraday_eq and sampling_eq
-
-class DollarBarDataFrame(BarDataFrame):
-    """
-    Wrapper for a pandas data frame that contains specifically intraday dollar sampled bar data
-    Also contains meta data : sampling_dollar
-    """
-    def __init__(self, bar_df: pd.DataFrame,
-                 sampling_dollar: int,
-                 date: Date,
-                 intra_day_period: IntraDayPeriod,
-                 symbol: str,
-                 deep_copy=False):
-        """
-        creates a copy of the original bar data frame to avoid setting with copy errors
-        :param bar_df: The bar data frame retrieved or sampled
-        :param sampling_dollar: the level of sampling that was used
-        :param date : the date, what else do you want?
-        :param intra_day_period : morning afternoon or midnight or perhaps the whole day
-        :param deep_copy: if set to true, the wrapped data frame will be a copy of the data frame used to initialize the object
-        else, it will be a reference.
-        Warning: This class will convert the input the dataframe to ranged indexing which may cause issues if object holds a reference instead of a copy
-        """
-        # ----- meta data -------
-        super().__init__(symbol)
-        self.sampling_dollar: int = sampling_dollar
-        self.date: Date = date
-        self.intra_day_period: IntraDayPeriod = intra_day_period
-        self.set_data_frame(bar_df = bar_df, deep_copy = deep_copy)
+        return self.symbol + " -- " + self.date.get_str_format_2() + " -- " + self.intra_day_period.value
 
 
-    def set_data_frame(self, bar_df : pd.DataFrame, deep_copy : bool = False):
-        # ----- check if the necessary data columns are found in the data frame ------
-        for required_column in BarDataFrame.REQUIRED_COLUMNS:
-            if required_column.value not in bar_df.columns:
-                raise SamplingRequiredColumnNotFound(required_column, Sampling.VOLUME)
-        # ----- do deep copying if specified to be true ------
-        # ----- makes sure only required columns are stored in the data frame -------
-        if deep_copy:
-            self.bar_data = bar_df.loc[:, [column.value for column in BarDataFrame.REQUIRED_COLUMNS]].copy(deep=deep_copy)
-        else:
-            self.bar_data = bar_df.loc[:, [column.value for column in BarDataFrame.REQUIRED_COLUMNS]]
-        # ----- enforce ranged indexing for data frame ------
-        self.bar_data.index = pd.RangeIndex(len(self.bar_data))
-
-    def create_empty_copy(self):
-        return DollarBarDataFrame(bar_df = self.create_empty_bar_df(), symbol = self.symbol, sampling_dollar = self.sampling_dollar,
-                                date = self.date, intra_day_period = self.intra_day_period)
-
-    def __str__(self):
-        return f"Dollar sampled bar -- {self.symbol} -- {self.date.get_str_format_2()}  -- {self.intra_day_period.value} --  sampling dollars : {self.sampling_dollar}"
-
-    def __eq__(self, other):
-        """ NOTE : this equality condition fails when comparing floats with int even if the values are the same """
-        if not isinstance(other, DollarBarDataFrame):
-            return False
-        data_frame_eq = self.bar_data.equals(other.bar_data)
-        date_eq = self.date == other.date
-        symbol_eq = self.symbol == other.symbol
-        sampling_eq = self.sampling_dollar == other.sampling_dollar
-        intraday_eq = self.intra_day_period == other.intra_day_period
-        return data_frame_eq and date_eq and symbol_eq and intraday_eq and sampling_eq
-
-
-# -------- Tick data frame --------
 class TickDataFrame:
     """
     Wrapper for a pandas data frame that contains tick data for one intraday period
@@ -412,68 +169,25 @@ class TickDataFrame:
     ASK1Q ASK2Q ASK3Q ASK4Q ASK5Q BID1P BID2P BID3P BID4P BID5P BID1Q BID2Q BID3Q BID4Q BID5Q
     Enforces ranged indexing for the underlying dataframe
     """
-    REQUIRED_COLUMNS = [
-        TickDataColumns.TIMESTAMP_NANO,
-        TickDataColumns.LAST_PRICE,
-        TickDataColumns.LAST_QUANTITY,
-        TickDataColumns.ASK1P,
-        TickDataColumns.ASK2P,
-        TickDataColumns.ASK3P,
-        TickDataColumns.ASK4P,
-        TickDataColumns.ASK5P,
-        TickDataColumns.ASK1Q,
-        TickDataColumns.ASK2Q,
-        TickDataColumns.ASK3Q,
-        TickDataColumns.ASK4Q,
-        TickDataColumns.ASK5Q,
-        TickDataColumns.BID1P,
-        TickDataColumns.BID2P,
-        TickDataColumns.BID3P,
-        TickDataColumns.BID4P,
-        TickDataColumns.BID5P,
-        TickDataColumns.BID1Q,
-        TickDataColumns.BID2Q,
-        TickDataColumns.BID3Q,
-        TickDataColumns.BID4Q,
-        TickDataColumns.BID5Q]
-
-    def __init__(self, tick_df: pd.DataFrame,
-                 date: Date,
-                 intra_day_period: IntraDayPeriod,
-                 symbol: str):
-        # ----- meta data -------
-        self.date: Date = date
-        self.intra_day_period: IntraDayPeriod = intra_day_period
-        self.symbol : str = symbol
-        # ----- check if the necessary data columns are found in the data frame ------
-        for required_column in TickDataFrame.REQUIRED_COLUMNS:
-            if required_column.value not in tick_df.columns:
-                raise TickRequiredColumnNotFound(required_column)
-        # ----- makes sure only required columns are stored in the data frame -------
-        self.tick_data : pd.DataFrame = tick_df.loc[:, [column.value for column in TickDataFrame.REQUIRED_COLUMNS]]
-        # ----- enforce ranged indexing for data frame ------
+    def __init__(self, tick_df: pd.DataFrame, tick_info : TickInfo):
+        self.validate_tick_columns(tick_df)
+        self.tick_info : TickInfo = tick_info
+        self.tick_data : pd.DataFrame = tick_df.loc[:, [column.value for column in TickDataColumns]]
         self.tick_data.index = pd.RangeIndex(len(self.tick_data))
 
-    def get_tick_data(self) -> pd.DataFrame:
-        """ return a reference to tick data frame """
-        return self.tick_data
-
-    def reset_all_columns_to_range_index(self):
-        for col in self.tick_data.columns:
-            self.tick_data[col].index = pd.RangeIndex(len(self.tick_data))
+    def validate_tick_columns(self, tick_df : pd.DataFrame) -> None:
+        for required_column in TickDataColumns:
+            if required_column.value not in tick_df.columns:
+                raise TickRequiredColumnNotFound(required_column)
 
     def __str__(self):
-        return self.symbol + " -- " + self.date.get_str_format_2() + " -- " + self.intra_day_period.value
+        return str(self.tick_info)
 
     def __eq__(self, other) -> bool:
         """ NOTE : this equality condition fails when comparing floats with int even if the values are the same """
         if not isinstance(other, TickDataFrame):
             return False
-        data_frame_eq = self.tick_data.equals(other.tick_data)
-        date_eq = self.date == other.date
-        symbol_eq = self.symbol == other.symbol
-        intra_day_eq = self.intra_day_period == other.intra_day_period
-        return data_frame_eq and date_eq and symbol_eq and intra_day_eq
+        return self.tick_data.equals(other.tick_data) and (self.tick_info == other.tick_info)
 
 # -------- custom exceptions ---------
 class TickRequiredColumnNotFound(Exception):
@@ -481,9 +195,9 @@ class TickRequiredColumnNotFound(Exception):
         message = "Required column missing : " + missing_column.value
         super().__init__(message)
 
-class SamplingRequiredColumnNotFound(Exception):
-    def __init__(self, missing_column: BarDataColumns, sampling_type: Sampling):
-        message = "Required column missing : " + missing_column.value + " : for sampling : " + sampling_type.value
+class BarRequiredColumnNotFound(Exception):
+    def __init__(self, missing_column: BarDataColumns):
+        message = "Required column missing : " + missing_column.value
         super().__init__(message)
 
 class InvalidDateException(ValueError):

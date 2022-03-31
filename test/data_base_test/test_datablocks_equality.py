@@ -94,122 +94,32 @@ class DataBlockEqualityTest(unittest.TestCase):
         self.assertNotEqual(self.date1, self.date4)
         self.assertNotEqual(self.date3, self.date4)
 
-    def test_time_bar_equality(self):
-        time_bar_1 = dat.TimeBarDataFrame(bar_df=self.df,
-                                               sampling_seconds=20,
-                                               date=self.date1,
-                                               intra_day_period=self.MORNING,
-                                               symbol=self.symbol)
-        time_bar_2 = dat.TimeBarDataFrame(bar_df=self.df,
-                                               sampling_seconds=20,
-                                               date=self.date1,
-                                               intra_day_period=self.MORNING,
-                                               symbol=self.symbol)
-        time_bar_3 = dat.TimeBarDataFrame(bar_df=self.df,
-                                               sampling_seconds=25,
-                                               date=self.date1,
-                                               intra_day_period=self.MORNING,
-                                               symbol=self.symbol)
+    def test_bar_equality(self):
+        bar_info_1 = dat.BarInfo(symbol = self.symbol, date = self.date1, intra_day_period = self.MORNING, sampling_level = 10, sampling_type = dat.Sampling.VOLUME)
+        bar_info_2 = dat.BarInfo(symbol = self.symbol, date = self.date2, intra_day_period = self.MORNING, sampling_level = 10, sampling_type = dat.Sampling.VOLUME)
+        bar_info_3 = dat.BarInfo(symbol = self.symbol, date = self.date3, intra_day_period = self.AFTERNOON, sampling_level = 10, sampling_type = dat.Sampling.VOLUME)
+        bar_info_4 = dat.BarInfo(symbol = self.symbol, date = self.date3, intra_day_period = self.AFTERNOON, sampling_level = 10, sampling_type = dat.Sampling.VOLUME)
 
-        time_bar_4 = dat.TimeBarDataFrame(bar_df=self.df2,
-                                               sampling_seconds=20,
-                                               date=self.date1,
-                                               intra_day_period=self.MORNING,
-                                               symbol=self.symbol)
-        self.assertEqual(time_bar_1, time_bar_2)
-        self.assertNotEqual(time_bar_1, time_bar_3)
-        self.assertNotEqual(time_bar_1, time_bar_4)
+        bar_1 = dat.BarDataFrame(bar_data = self.df, bar_info = bar_info_1)
+        bar_2 = dat.BarDataFrame(bar_data=self.df, bar_info=bar_info_2)
+        bar_3 = dat.BarDataFrame(bar_data=self.df, bar_info=bar_info_3)
+        bar_4 = dat.BarDataFrame(bar_data=self.df2, bar_info=bar_info_4)
 
-    def test_tick_bar_equality(self):
-        tick_bar_1 = dat.TickBarDataFrame(bar_df = self.df,
-                                           sampling_ticks = 20,
-                                           date = self.date1,
-                                           intra_day_period = self.MORNING,
-                                           symbol = self.symbol)
-
-        tick_bar_2 = dat.TickBarDataFrame(bar_df = self.df,
-                                           sampling_ticks = 20,
-                                           date = self.date1,
-                                           intra_day_period = self.MORNING,
-                                           symbol = self.symbol)
-
-        tick_bar_3 = dat.TickBarDataFrame(bar_df = self.df,
-                                           sampling_ticks = 20,
-                                           date = self.date2,
-                                           intra_day_period = self.MORNING,
-                                           symbol = self.symbol)
-
-        tick_bar_4 = dat.TickBarDataFrame(bar_df = self.df,
-                                           sampling_ticks = 20,
-                                           date = self.date2,
-                                           intra_day_period = self.AFTERNOON,
-                                           symbol = self.symbol)
-        self.assertEqual(tick_bar_1, tick_bar_2)
-        self.assertEqual(tick_bar_2, tick_bar_3)
-        self.assertNotEqual(tick_bar_2, tick_bar_4)
-
-    def test_vol_bar_equality(self):
-        vol_bar_1 = dat.VolumeBarDataFrame(bar_df=self.df,
-                                          sampling_volume=20,
-                                          date=self.date1,
-                                          intra_day_period=self.MORNING,
-                                          symbol=self.symbol)
-
-        vol_bar_2 = dat.VolumeBarDataFrame(bar_df=self.df,
-                                          sampling_volume=20,
-                                          date=self.date1,
-                                          intra_day_period=self.MORNING,
-                                          symbol=self.symbol)
-
-        vol_bar_3 = dat.VolumeBarDataFrame(bar_df=self.df,
-                                          sampling_volume=30,
-                                          date=self.date2,
-                                          intra_day_period=self.MORNING,
-                                          symbol=self.symbol)
-
-        vol_bar_4 = dat.VolumeBarDataFrame(bar_df=self.df2,
-                                         sampling_volume=20,
-                                         date=self.date1,
-                                         intra_day_period=self.AFTERNOON,
-                                         symbol=self.symbol)
-        self.assertEqual(vol_bar_1, vol_bar_2)
-        self.assertNotEqual(vol_bar_2, vol_bar_3)
-        self.assertNotEqual(vol_bar_2, vol_bar_4)
-
-    def test_dollar_bar_equality(self):
-        dollar_bar_1 = dat.DollarBarDataFrame(bar_df=self.df,
-                                           sampling_dollar =20,
-                                           date=self.date1,
-                                           intra_day_period=self.MORNING,
-                                           symbol=self.symbol)
-
-        dollar_bar_2 = dat.DollarBarDataFrame(bar_df=self.df,
-                                           sampling_dollar =20,
-                                           date=self.date1,
-                                           intra_day_period=self.MORNING,
-                                           symbol=self.symbol)
-
-        dollar_bar_3 = dat.DollarBarDataFrame(bar_df=self.df2,
-                                           sampling_dollar =35,
-                                           date=self.date4,
-                                           intra_day_period=self.MORNING,
-                                           symbol=self.symbol)
-
-        dollar_bar_4 = dat.DollarBarDataFrame(bar_df=self.df2,
-                                           sampling_dollar =35,
-                                           date=self.date4,
-                                           intra_day_period=self.MORNING,
-                                           symbol=self.symbol)
-        self.assertEqual(dollar_bar_1, dollar_bar_2)
-        self.assertEqual(dollar_bar_3, dollar_bar_4)
-        self.assertNotEqual(dollar_bar_2, dollar_bar_3)
-        self.assertNotEqual(dollar_bar_2, dollar_bar_4)
+        self.assertEqual(bar_1, bar_2)
+        self.assertNotEqual(bar_1, bar_3)
+        self.assertNotEqual(bar_1, bar_4)
+        self.assertNotEqual(bar_3, bar_4)
 
     def test_tick_equality(self):
-        tick_1 = dat.TickDataFrame(tick_df = self.tick_df, date = self.date1, intra_day_period = self.MORNING, symbol = self.symbol)
-        tick_2 = dat.TickDataFrame(tick_df = self.tick_df, date = self.date2, intra_day_period = self.MORNING, symbol = self.symbol)
-        tick_3 = dat.TickDataFrame(tick_df = self.tick_df, date = self.date3, intra_day_period = self.AFTERNOON, symbol = self.symbol)
-        tick_4 = dat.TickDataFrame(tick_df=self.tick_df_2, date=self.date3, intra_day_period=self.AFTERNOON, symbol=self.symbol)
+        tick_info_1 = dat.TickInfo(symbol = self.symbol, date = self.date1, intra_day_period = self.MORNING)
+        tick_info_2 = dat.TickInfo(symbol = self.symbol, date = self.date2, intra_day_period = self.MORNING)
+        tick_info_3 = dat.TickInfo(symbol = self.symbol, date = self.date3, intra_day_period = self.AFTERNOON)
+        tick_info_4 = dat.TickInfo(symbol = self.symbol, date = self.date3, intra_day_period = self.AFTERNOON)
+
+        tick_1 = dat.TickDataFrame(tick_df = self.tick_df, tick_info = tick_info_1)
+        tick_2 = dat.TickDataFrame(tick_df = self.tick_df, tick_info = tick_info_2)
+        tick_3 = dat.TickDataFrame(tick_df = self.tick_df, tick_info = tick_info_3)
+        tick_4 = dat.TickDataFrame(tick_df=self.tick_df_2, tick_info = tick_info_4)
         self.assertEqual(tick_1, tick_2)
         self.assertNotEqual(tick_1, tick_3)
         self.assertNotEqual(tick_1, tick_4)
